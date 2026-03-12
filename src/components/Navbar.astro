@@ -1,0 +1,34 @@
+<div class="navbar bg-base-300 flex justify-center">
+	<div class="w-10/12 flex justify-between">
+		<div class="flex items-center">
+			Logo
+		</div>
+
+		<ul class="flex justify-evenly items-center menu menu-horizontal">
+  			<li class="px-3"><a>Home</a></li>
+  			<li class="px-3" onmouseover="showMenu()" onmouseout="hideMenu()">
+				<details id="info">
+					<summary><a>Info</a></summary>
+					<ul>
+ 						<li><a class="text-nowrap">Orari</a></li>
+ 						<li><a class="text-nowrap">Contatti</a></li>
+ 						<li><a class="text-nowrap">Dove siamo</a></li>
+ 						<li><a class="text-nowrap">Gruppi e attività</a></li>
+					</ul>
+				</details>
+			</li class="p-3">
+ 			<li class="px-3"><a>Avvisi e notizie</a></li>
+ 			<li class="px-3"><a>Blog</a></li>
+		</ul>
+	</div>
+</div>
+
+<script is:inline>
+function showMenu() {
+	document.getElementById('info').open = true;
+}
+
+function hideMenu() {
+	document.getElementById('info').open = false;
+}
+</script>
