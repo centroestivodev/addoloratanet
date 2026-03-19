@@ -1,6 +1,27 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ChurchIcon from '../assets/icons/church.svg';
+import NewspaperIcon from '../assets/icons/newspaper.svg';
+import HandshakeIcon from '../assets/icons/handshake.svg';
+import HeroIcon from '../components/HeroIcon.astro';
+import HeroImg from '../assets/images/hero.jpeg';
 ---
 
 <Layout>
+	<div class="hero h-1/3" style={`background-image: url(${HeroImg.src});`}>
+		<div class="hero-overlay"></div>
+ 	 	<div class="hero-content text-center w-1/2">
+ 	 		<div class="w-full flex justify-between">
+				<HeroIcon text="La parrocchia" href="/info">
+					<ChurchIcon class="h-full w-full text-zinc-700" />
+				</HeroIcon>
+				<HeroIcon text="Notizie e avvisi" href="/avvisi">
+					<NewspaperIcon class="h-full w-full text-zinc-700" />
+				</HeroIcon>
+				<HeroIcon text="Sostienici" href="/sostienici">
+					<HandshakeIcon class="h-full w-full text-zinc-700" />
+				</HeroIcon>
+ 	 		</div>
+		</div>
+	</div>
 </Layout>
