@@ -4,12 +4,15 @@ import tailwindcss from "@tailwindcss/vite";
 
 import sanity from "@sanity/astro";
 import react from "@astrojs/react";
+import netlify from "@astrojs/netlify";
 
 // https://astro.build/config
 export default defineConfig({
   vite: {
       plugins: [tailwindcss()]
 	},
+
+  adapter: netlify(),
 
   integrations: [sanity({
 	projectId: 'bomj2fjw',
