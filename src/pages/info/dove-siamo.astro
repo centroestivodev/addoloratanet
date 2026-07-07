@@ -1,0 +1,52 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import MapPinIcon from "../../assets/icons/map-pin.svg";
+
+const address = "V.le della Venezia Giulia 134, 00177 Roma";
+const mapsQuery = encodeURIComponent(address);
+
+const lat = 41.897757;
+const lon = 12.560785;
+const bbox = [lon - 0.01, lat - 0.006, lon + 0.01, lat + 0.006].join(",");
+const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+---
+
+<Layout>
+	<div class="w-8/12 mx-auto py-12">
+		<h1 class="text-3xl font-bold mb-2">Dove siamo</h1>
+		<p class="text-base-content/70 mb-10">
+			La chiesa si trova nel quartiere Prenestino-Labicano, facilmente raggiungibile con i mezzi
+			pubblici.
+		</p>
+
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+			<div class="sm:col-span-1">
+				<div class="card bg-base-200">
+					<div class="card-body">
+						<div class="flex items-start gap-2">
+							<MapPinIcon class="h-5 w-5 text-primary shrink-0 mt-1" />
+							<p>{address}</p>
+						</div>
+						<a
+							class="btn btn-primary btn-sm mt-4"
+							href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Apri in Google Maps
+						</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="sm:col-span-2 aspect-video overflow-hidden rounded-box border border-base-300">
+				<iframe
+					class="w-full h-full"
+					loading="lazy"
+					src={osmEmbedSrc}
+					title="Mappa: Parrocchia Santa Maria Addolorata"
+				></iframe>
+			</div>
+		</div>
+	</div>
+</Layout>
