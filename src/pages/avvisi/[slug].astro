@@ -1,0 +1,53 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+
+export async function getStaticPaths() {
+	const events = await sanityClient.fetch<{ slug: string }[]>(
+		`*[_type == "event" && defined(slug.current)]{ "slug": slug.current }`
+	);
+	return events.map((event) => ({ params: { slug: event.slug } }));
+}
+
+const { slug } = Astro.params;
+
+const event = await sanityClient.fetch(
+	`*[_type == "event" && slug.current == $slug][0]{
+		title, description, image, eventDate
+	}`,
+	{ slug }
+);
+
+if (!event) {
+	return Astro.redirect("/avvisi");
+}
+
+const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<Layout>
+	<Container class="py-12">
+		<div class="max-w-3xl mx-auto">
+			<a href="/avvisi" class="link link-hover text-sm text-base-content/60">← Avvisi e notizie</a>
+
+			<span class="block text-xs text-base-content/60 mt-4">
+				{dateFormatter.format(new Date(event.eventDate))}
+			</span>
+			<h1 class="text-3xl font-bold mt-2 mb-6">{event.title}</h1>
+
+			{
+				event.image && (
+					<img
+						src={urlFor(event.image).width(1200).auto("format").url()}
+						alt=""
+						class="rounded-box mb-8 w-full"
+					/>
+				)
+			}
+
+			<p class="whitespace-pre-line leading-relaxed">{event.description}</p>
+		</div>
+	</Container>
+</Layout>

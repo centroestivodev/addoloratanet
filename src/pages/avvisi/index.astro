@@ -1,0 +1,65 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+import { truncate } from "../../sanity/lib/text";
+
+interface Event {
+	_id: string;
+	title: string;
+	slug: string;
+	description: string;
+	image?: any;
+	eventDate: string;
+}
+
+const events = await sanityClient.fetch<Event[]>(
+	`*[_type == "event" && defined(slug.current)] | order(eventDate desc){
+		_id, title, "slug": slug.current, description, image, eventDate
+	}`
+);
+
+const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Avvisi e notizie</h1>
+		<p class="text-base-content/70 mb-10">
+			Le ultime comunicazioni, gli eventi e le iniziative della parrocchia.
+		</p>
+
+		{
+			events.length === 0 ? (
+				<p class="text-base-content/60">Non ci sono ancora avvisi pubblicati.</p>
+			) : (
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+					{events.map((event) => (
+						<a
+							href={`/avvisi/${event.slug}`}
+							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
+						>
+							{event.image && (
+								<figure class="aspect-video">
+									<img
+										src={urlFor(event.image).width(600).height(340).auto("format").url()}
+										alt=""
+										class="w-full h-full object-cover"
+									/>
+								</figure>
+							)}
+							<div class="card-body">
+								<span class="text-xs text-base-content/60">
+									{dateFormatter.format(new Date(event.eventDate))}
+								</span>
+								<h2 class="card-title">{event.title}</h2>
+								<p class="text-base-content/70">{truncate(event.description)}</p>
+							</div>
+						</a>
+					))}
+				</div>
+			)
+		}
+	</Container>
+</Layout>

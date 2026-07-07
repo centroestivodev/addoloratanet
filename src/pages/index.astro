@@ -8,6 +8,26 @@ import MapPinIcon from '../assets/icons/map-pin.svg';
 import HeroIcon from '../components/HeroIcon.astro';
 import Container from '../components/Container.astro';
 import HeroImg from '../assets/images/hero.jpeg';
+import { sanityClient } from 'sanity:client';
+import { urlFor } from '../sanity/lib/image';
+import { truncate } from '../sanity/lib/text';
+
+interface Event {
+	_id: string;
+	title: string;
+	slug: string;
+	description: string;
+	image?: any;
+	eventDate: string;
+}
+
+const latestEvents = await sanityClient.fetch<Event[]>(
+	`*[_type == "event" && defined(slug.current)] | order(eventDate desc)[0...3]{
+		_id, title, "slug": slug.current, description, image, eventDate
+	}`
+);
+
+const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
 const highlights = [
 	{
@@ -79,4 +99,43 @@ const highlights = [
 			}
 		</div>
 	</Container>
+
+	{
+		latestEvents.length > 0 && (
+			<Container class="pb-16">
+				<div class="flex items-baseline justify-between mb-6">
+					<h2 class="text-2xl font-bold">Ultime notizie</h2>
+					<a href="/avvisi" class="link link-hover text-primary text-sm shrink-0 ml-4">
+						Vedi tutti gli avvisi →
+					</a>
+				</div>
+
+				<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+					{latestEvents.map((event) => (
+						<a
+							href={`/avvisi/${event.slug}`}
+							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
+						>
+							{event.image && (
+								<figure class="aspect-video">
+									<img
+										src={urlFor(event.image).width(600).height(340).auto('format').url()}
+										alt=""
+										class="w-full h-full object-cover"
+									/>
+								</figure>
+							)}
+							<div class="card-body">
+								<span class="text-xs text-base-content/60">
+									{dateFormatter.format(new Date(event.eventDate))}
+								</span>
+								<h3 class="card-title">{event.title}</h3>
+								<p class="text-base-content/70">{truncate(event.description)}</p>
+							</div>
+						</a>
+					))}
+				</div>
+			</Container>
+		)
+	}
 </Layout>
