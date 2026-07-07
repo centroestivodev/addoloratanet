@@ -3,25 +3,80 @@ import Layout from '../layouts/Layout.astro';
 import ChurchIcon from '../assets/icons/church.svg';
 import NewspaperIcon from '../assets/icons/newspaper.svg';
 import HandshakeIcon from '../assets/icons/handshake.svg';
+import ClockIcon from '../assets/icons/clock.svg';
+import MapPinIcon from '../assets/icons/map-pin.svg';
 import HeroIcon from '../components/HeroIcon.astro';
+import Container from '../components/Container.astro';
 import HeroImg from '../assets/images/hero.jpeg';
+
+const highlights = [
+	{
+		href: '/info/orari',
+		title: 'Orari delle Messe',
+		description: 'Consulta gli orari delle celebrazioni e della segreteria parrocchiale.',
+		Icon: ClockIcon,
+	},
+	{
+		href: '/info/dove-siamo',
+		title: 'Dove siamo',
+		description: 'V.le della Venezia Giulia 134, Roma. Vieni a trovarci.',
+		Icon: MapPinIcon,
+	},
+	{
+		href: '/avvisi',
+		title: 'Ultimi avvisi',
+		description: 'Resta aggiornato su eventi, iniziative e comunicazioni della parrocchia.',
+		Icon: NewspaperIcon,
+	},
+];
 ---
 
 <Layout>
-	<div class="hero h-1/3" style={`background-image: url(${HeroImg.src});`}>
-		<div class="hero-overlay"></div>
- 	 	<div class="hero-content text-center w-1/2">
- 	 		<div class="w-full flex justify-between">
-				<HeroIcon text="La parrocchia" href="/info">
-					<ChurchIcon class="h-full w-full text-zinc-700" />
-				</HeroIcon>
-				<HeroIcon text="Notizie e avvisi" href="/avvisi">
-					<NewspaperIcon class="h-full w-full text-zinc-700" />
-				</HeroIcon>
-				<HeroIcon text="Sostienici" href="/sostienici">
-					<HandshakeIcon class="h-full w-full text-zinc-700" />
-				</HeroIcon>
- 	 		</div>
+	<section
+		class="hero min-h-[65vh] sm:min-h-[75vh] relative"
+		style={`background-image: url(${HeroImg.src}); background-position: center 30%;`}
+	>
+		<div class="hero-overlay bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
+		<div class="hero-content text-center px-4">
+			<div class="max-w-2xl flex flex-col items-center gap-8">
+				<div>
+					<p class="uppercase tracking-widest text-xs sm:text-sm text-white/70 mb-2">Benvenuti</p>
+					<h1 class="text-3xl sm:text-5xl font-bold text-white">Parrocchia Santa Maria Addolorata</h1>
+					<p class="mt-4 text-base sm:text-lg text-white/90">
+						Una comunità che accoglie, celebra e cammina insieme, nel cuore di Roma.
+					</p>
+				</div>
+
+				<div class="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-xl">
+					<HeroIcon text="La parrocchia" href="/info">
+						<ChurchIcon class="h-full w-full" />
+					</HeroIcon>
+					<HeroIcon text="Notizie e avvisi" href="/avvisi">
+						<NewspaperIcon class="h-full w-full" />
+					</HeroIcon>
+					<HeroIcon text="Sostienici" href="/sostienici">
+						<HandshakeIcon class="h-full w-full" />
+					</HeroIcon>
+				</div>
+			</div>
 		</div>
-	</div>
+	</section>
+
+	<Container class="py-16">
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+			{
+				highlights.map(({ href, title, description, Icon }) => (
+					<a href={href} class="card bg-base-200 hover:shadow-lg transition-shadow">
+						<div class="card-body">
+							<div class="h-8 w-8 text-primary mb-1">
+								<Icon class="h-full w-full" />
+							</div>
+							<h2 class="card-title">{title}</h2>
+							<p class="text-base-content/70">{description}</p>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</Container>
 </Layout>

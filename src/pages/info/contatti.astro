@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
 import PhoneIcon from "../../assets/icons/phone.svg";
 import MailIcon from "../../assets/icons/mail.svg";
 import ClockIcon from "../../assets/icons/clock.svg";
@@ -13,7 +14,7 @@ const socials = [
 ---
 
 <Layout>
-	<div class="w-8/12 mx-auto py-12">
+	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Contatti</h1>
 		<p class="text-base-content/70 mb-10">
 			Per informazioni, richieste di sacramenti o qualsiasi necessità, questi sono i nostri
@@ -67,5 +68,5 @@ const socials = [
 				}
 			</div>
 		</div>
-	</div>
+	</Container>
 </Layout>

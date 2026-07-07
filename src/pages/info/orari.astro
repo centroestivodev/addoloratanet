@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
 
 const periods = [
 	{
@@ -30,7 +31,7 @@ const periods = [
 ---
 
 <Layout>
-	<div class="w-8/12 mx-auto py-12">
+	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Orari</h1>
 		<p class="text-base-content/70 mb-10">
 			Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli
@@ -93,5 +94,5 @@ const periods = [
 				</div>
 			</div>
 		</div>
-	</div>
+	</Container>
 </Layout>

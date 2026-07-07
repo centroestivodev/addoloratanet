@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
 
 const groups = [
 	"Azione Cattolica",
@@ -27,7 +28,7 @@ const groups = [
 ---
 
 <Layout>
-	<div class="w-8/12 mx-auto py-12">
+	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Gruppi e attività</h1>
 		<p class="text-base-content/70 mb-10">
 			La vita della parrocchia è animata da tanti gruppi e attività, aperti a chiunque voglia
@@ -45,5 +46,5 @@ const groups = [
 				))
 			}
 		</ul>
-	</div>
+	</Container>
 </Layout>

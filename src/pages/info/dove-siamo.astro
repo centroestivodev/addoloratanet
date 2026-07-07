@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
 import MapPinIcon from "../../assets/icons/map-pin.svg";
 
 const address = "V.le della Venezia Giulia 134, 00177 Roma";
@@ -12,7 +13,7 @@ const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox
 ---
 
 <Layout>
-	<div class="w-8/12 mx-auto py-12">
+	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Dove siamo</h1>
 		<p class="text-base-content/70 mb-10">
 			La chiesa si trova nel quartiere Prenestino-Labicano, facilmente raggiungibile con i mezzi
@@ -48,5 +49,5 @@ const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox
 				></iframe>
 			</div>
 		</div>
-	</div>
+	</Container>
 </Layout>
