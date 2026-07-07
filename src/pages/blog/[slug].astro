@@ -1,0 +1,54 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import PortableTextBody from "../../components/PortableTextBody";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+
+export async function getStaticPaths() {
+	const posts = await sanityClient.fetch<{ slug: string }[]>(
+		`*[_type == "post" && defined(slug.current)]{ "slug": slug.current }`
+	);
+	return posts.map((post) => ({ params: { slug: post.slug } }));
+}
+
+const { slug } = Astro.params;
+
+const post = await sanityClient.fetch(
+	`*[_type == "post" && slug.current == $slug][0]{
+		title, images, body, _createdAt
+	}`,
+	{ slug }
+);
+
+if (!post) {
+	return Astro.redirect("/blog");
+}
+
+const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<Layout>
+	<Container class="py-12">
+		<div class="max-w-3xl mx-auto">
+			<a href="/blog" class="link link-hover text-sm text-base-content/60">← Blog</a>
+
+			<span class="block text-xs text-base-content/60 mt-4">
+				{dateFormatter.format(new Date(post._createdAt))}
+			</span>
+			<h1 class="text-3xl font-bold mt-2 mb-6">{post.title}</h1>
+
+			{
+				post.images?.[0] && (
+					<img
+						src={urlFor(post.images[0]).width(1200).auto("format").url()}
+						alt=""
+						class="rounded-box mb-8 w-full"
+					/>
+				)
+			}
+
+			<PortableTextBody value={post.body} />
+		</div>
+	</Container>
+</Layout>

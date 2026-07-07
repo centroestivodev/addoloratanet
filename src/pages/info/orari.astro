@@ -1,0 +1,98 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+
+const periods = [
+	{
+		id: "set-apr",
+		label: "1 Set - 30 Apr",
+		feriali: ["9:00", "10:00", "18:00"],
+		festivi: ["8:00", "9:00", "10:00", "11:00", "12:00", "18:00"],
+	},
+	{
+		id: "mag-giu",
+		label: "1 Mag - 30 Giu",
+		feriali: ["9:00", "10:00", "19:00"],
+		festivi: ["8:00", "9:00", "10:00", "11:00", "12:00", "19:00"],
+	},
+	{
+		id: "lug",
+		label: "1 - 30 Lug",
+		feriali: ["9:00", "19:00"],
+		festivi: ["8:00", "9:00", "10:00", "11:00", "19:00"],
+	},
+	{
+		id: "ago",
+		label: "1 - 31 Ago",
+		feriali: ["9:00", "19:00"],
+		festivi: ["8:00", "9:00", "11:00", "19:00"],
+	},
+];
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Orari</h1>
+		<p class="text-base-content/70 mb-10">
+			Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli
+			orari delle SS. Messe.
+		</p>
+
+		<div class="tabs tabs-lift mb-10">
+			{
+				periods.map((period, i) => (
+					<>
+						<input
+							type="radio"
+							name="orari-tabs"
+							class="tab"
+							aria-label={period.label}
+							checked={i === 0}
+						/>
+						<div class="tab-content bg-base-100 border-base-300 p-6">
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+								<div>
+									<h3 class="font-semibold mb-2">SS. Messe feriali</h3>
+									<ul class="flex flex-wrap gap-2">
+										{period.feriali.map((time) => (
+											<li class="badge badge-lg badge-outline">{time}</li>
+										))}
+									</ul>
+								</div>
+								<div>
+									<h3 class="font-semibold mb-2">SS. Messe festive</h3>
+									<ul class="flex flex-wrap gap-2">
+										{period.festivi.map((time) => (
+											<li class="badge badge-lg badge-primary badge-outline">{time}</li>
+										))}
+									</ul>
+								</div>
+							</div>
+						</div>
+					</>
+				))
+			}
+		</div>
+
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title text-base">Rosario</h2>
+					<p class="text-base-content/70">Tutti i giorni alle 18:30</p>
+				</div>
+			</div>
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title text-base">Vespri</h2>
+					<p class="text-base-content/70">Tutti i giorni alle 19:30</p>
+				</div>
+			</div>
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title text-base">Segreteria parrocchiale</h2>
+					<p class="text-base-content/70">Da lunedì a sabato, dalle 17:00 alle 19:00</p>
+				</div>
+			</div>
+		</div>
+	</Container>
+</Layout>

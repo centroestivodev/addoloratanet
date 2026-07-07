@@ -1,0 +1,63 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import ClockIcon from "../../assets/icons/clock.svg";
+import MailIcon from "../../assets/icons/mail.svg";
+import MapPinIcon from "../../assets/icons/map-pin.svg";
+import UsersIcon from "../../assets/icons/users.svg";
+
+const sections = [
+	{
+		href: "/info/orari",
+		title: "Orari",
+		description: "Orari delle SS. Messe, vespri, rosario e apertura della segreteria.",
+		Icon: ClockIcon,
+	},
+	{
+		href: "/info/contatti",
+		title: "Contatti",
+		description: "Segreteria parrocchiale, parroco e canali social.",
+		Icon: MailIcon,
+	},
+	{
+		href: "/info/dove-siamo",
+		title: "Dove siamo",
+		description: "Indirizzo della parrocchia e indicazioni stradali.",
+		Icon: MapPinIcon,
+	},
+	{
+		href: "/info/attivita",
+		title: "Gruppi e attività",
+		description: "I gruppi, i cori e le attività della comunità parrocchiale.",
+		Icon: UsersIcon,
+	},
+];
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">La parrocchia</h1>
+		<p class="text-base-content/70 mb-10">
+			Tutto quello che c'è da sapere sulla Parrocchia Santa Maria Addolorata: orari, contatti, come
+			raggiungerci e le attività della comunità.
+		</p>
+
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			{
+				sections.map(({ href, title, description, Icon }) => (
+					<a href={href} class="card bg-base-200 hover:shadow-md transition-shadow">
+						<div class="card-body flex-row items-start gap-4">
+							<div class="shrink-0 h-10 w-10 text-primary">
+								<Icon class="h-full w-full" />
+							</div>
+							<div>
+								<h2 class="card-title">{title}</h2>
+								<p class="text-base-content/70">{description}</p>
+							</div>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</Container>
+</Layout>

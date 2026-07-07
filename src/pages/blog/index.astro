@@ -1,0 +1,63 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+import { toPlainText } from "../../sanity/lib/portableText";
+
+interface Post {
+	_id: string;
+	title: string;
+	slug: string;
+	images?: any[];
+	body: any[];
+	_createdAt: string;
+}
+
+const posts = await sanityClient.fetch<Post[]>(
+	`*[_type == "post" && defined(slug.current)] | order(_createdAt desc){
+		_id, title, "slug": slug.current, images, body, _createdAt
+	}`
+);
+
+const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Blog</h1>
+		<p class="text-base-content/70 mb-10">La parrocchia in diretta: racconti, riflessioni e momenti di vita comunitaria.</p>
+
+		{
+			posts.length === 0 ? (
+				<p class="text-base-content/60">Non ci sono ancora articoli pubblicati.</p>
+			) : (
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+					{posts.map((post) => (
+						<a
+							href={`/blog/${post.slug}`}
+							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
+						>
+							{post.images?.[0] && (
+								<figure class="aspect-video">
+									<img
+										src={urlFor(post.images[0]).width(600).height(340).auto("format").url()}
+										alt=""
+										class="w-full h-full object-cover"
+									/>
+								</figure>
+							)}
+							<div class="card-body">
+								<span class="text-xs text-base-content/60">
+									{dateFormatter.format(new Date(post._createdAt))}
+								</span>
+								<h2 class="card-title">{post.title}</h2>
+								<p class="text-base-content/70">{toPlainText(post.body)}</p>
+							</div>
+						</a>
+					))}
+				</div>
+			)
+		}
+	</Container>
+</Layout>

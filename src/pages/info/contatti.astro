@@ -1,0 +1,72 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import PhoneIcon from "../../assets/icons/phone.svg";
+import MailIcon from "../../assets/icons/mail.svg";
+import ClockIcon from "../../assets/icons/clock.svg";
+
+const socials = [
+	{ name: "Facebook", href: "https://facebook.com/smaddolorata" },
+	{ name: "Instagram", href: "https://instagram.com/giovani_addolorata" },
+	{ name: "YouTube", href: "https://www.youtube.com/channel/UCss8ZJSwWIh7Yj_Lz-9ImMw" },
+	{ name: "Twitter", href: "https://twitter.com/smaddolorata" },
+];
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Contatti</h1>
+		<p class="text-base-content/70 mb-10">
+			Per informazioni, richieste di sacramenti o qualsiasi necessità, questi sono i nostri
+			riferimenti.
+		</p>
+
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">Segreteria parrocchiale</h2>
+					<ul class="flex flex-col gap-2 mt-2">
+						<li class="flex items-center gap-2">
+							<PhoneIcon class="h-5 w-5 text-primary shrink-0" />
+							<a class="link link-hover" href="tel:+39062593161">06 259 3161</a>
+						</li>
+						<li class="flex items-center gap-2">
+							<MailIcon class="h-5 w-5 text-primary shrink-0" />
+							<a class="link link-hover" href="mailto:smaddolorata@gmail.com">smaddolorata@gmail.com</a>
+						</li>
+						<li class="flex items-center gap-2">
+							<ClockIcon class="h-5 w-5 text-primary shrink-0" />
+							<span>Da lunedì a sabato, 17:00 - 19:00</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">Parroco</h2>
+					<p class="font-medium mt-2">Don Antonio d'Errico</p>
+					<ul class="flex flex-col gap-2 mt-2">
+						<li class="flex items-center gap-2">
+							<MailIcon class="h-5 w-5 text-primary shrink-0" />
+							<a class="link link-hover" href="mailto:antonioderrico66@gmail.com">antonioderrico66@gmail.com</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div>
+			<h2 class="text-xl font-semibold mb-4">Seguici sui social</h2>
+			<div class="flex flex-wrap gap-3">
+				{
+					socials.map((social) => (
+						<a class="btn btn-outline btn-primary" href={social.href} target="_blank" rel="noopener noreferrer">
+							{social.name}
+						</a>
+					))
+				}
+			</div>
+		</div>
+	</Container>
+</Layout>
