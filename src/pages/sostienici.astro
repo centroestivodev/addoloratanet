@@ -1,0 +1,61 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/Container.astro";
+---
+
+<Layout>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Sostienici</h1>
+		<p class="text-base-content/70 mb-10 max-w-2xl">
+			La vita della parrocchia — le celebrazioni, la cura della chiesa, le attività per i più
+			giovani e il sostegno a chi ha bisogno — vive anche grazie al contributo di chi ci sostiene.
+			Ecco come puoi aiutarci.
+		</p>
+
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">5x1000</h2>
+					<p class="text-base-content/70">
+						Nella dichiarazione dei redditi puoi destinare il 5x1000 alla parrocchia, senza alcun
+						costo aggiuntivo, indicando il codice fiscale:
+					</p>
+					<p class="font-mono font-semibold mt-2">[codice fiscale da inserire]</p>
+				</div>
+			</div>
+
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">Bonifico bancario</h2>
+					<p class="text-base-content/70">Puoi effettuare una donazione libera tramite bonifico a:</p>
+					<p class="font-mono font-semibold mt-2">[IBAN da inserire]</p>
+				</div>
+			</div>
+
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">Offerte in chiesa</h2>
+					<p class="text-base-content/70">
+						Durante le celebrazioni, o in qualsiasi altro momento, puoi lasciare un'offerta libera
+						nelle cassette all'interno della chiesa.
+					</p>
+				</div>
+			</div>
+
+			<div class="card bg-base-200">
+				<div class="card-body">
+					<h2 class="card-title">Dona il tuo tempo</h2>
+					<p class="text-base-content/70">
+						Il modo più prezioso per sostenerci è partecipare attivamente: scopri i
+						<a href="/info/attivita" class="link link-primary">gruppi e le attività</a> della parrocchia.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<p class="text-base-content/60 text-sm mt-10">
+			Per qualsiasi informazione sulle donazioni puoi
+			<a href="/info/contatti" class="link link-primary">contattare la segreteria parrocchiale</a>.
+		</p>
+	</Container>
+</Layout>

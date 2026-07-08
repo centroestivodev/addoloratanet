@@ -3,11 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import ChurchIcon from '../assets/icons/church.svg';
 import NewspaperIcon from '../assets/icons/newspaper.svg';
 import HandshakeIcon from '../assets/icons/handshake.svg';
-import ClockIcon from '../assets/icons/clock.svg';
-import MapPinIcon from '../assets/icons/map-pin.svg';
-import HeroIcon from '../components/HeroIcon.astro';
 import Container from '../components/Container.astro';
-import HeroImg from '../assets/images/hero.jpeg';
+import type { ImageMetadata } from 'astro';
 import { sanityClient } from 'sanity:client';
 import { urlFor } from '../sanity/lib/image';
 import { truncate } from '../sanity/lib/text';
@@ -29,111 +26,146 @@ const latestEvents = await sanityClient.fetch<Event[]>(
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const highlights = [
-	{
-		href: '/info/orari',
-		title: 'Orari delle Messe',
-		description: 'Consulta gli orari delle celebrazioni e della segreteria parrocchiale.',
-		Icon: ClockIcon,
-	},
-	{
-		href: '/info/dove-siamo',
-		title: 'Dove siamo',
-		description: 'V.le della Venezia Giulia 134, Roma. Vieni a trovarci.',
-		Icon: MapPinIcon,
-	},
-	{
-		href: '/avvisi',
-		title: 'Ultimi avvisi',
-		description: 'Resta aggiornato su eventi, iniziative e comunicazioni della parrocchia.',
-		Icon: NewspaperIcon,
-	},
+const [featured, ...rest] = latestEvents;
+
+const heroImageModules = import.meta.glob<{ default: ImageMetadata }>(
+	'../assets/images/hero/*.{jpg,jpeg,png,webp}',
+	{ eager: true }
+);
+const heroImages = Object.keys(heroImageModules)
+	.sort()
+	.map((path) => heroImageModules[path].default);
+
+const quickLinks = [
+	{ href: '/info', label: 'La parrocchia', Icon: ChurchIcon },
+	{ href: '/avvisi', label: 'Notizie e avvisi', Icon: NewspaperIcon },
+	{ href: '/sostienici', label: 'Sostienici', Icon: HandshakeIcon },
 ];
 ---
 
 <Layout>
-	<section
-		class="hero min-h-[65vh] sm:min-h-[75vh] relative"
-		style={`background-image: url(${HeroImg.src}); background-position: center 30%;`}
-	>
-		<div class="hero-overlay bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
-		<div class="hero-content text-center px-4">
-			<div class="max-w-2xl flex flex-col items-center gap-8">
-				<div>
-					<p class="uppercase tracking-widest text-xs sm:text-sm text-white/70 mb-2">Benvenuti</p>
-					<h1 class="text-3xl sm:text-5xl font-bold text-white">Parrocchia Santa Maria Addolorata</h1>
-					<p class="mt-4 text-base sm:text-lg text-white/90">
-						Una comunità che accoglie, celebra e cammina insieme, nel cuore di Roma.
-					</p>
-				</div>
-
-				<div class="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-xl">
-					<HeroIcon text="La parrocchia" href="/info">
-						<ChurchIcon class="h-full w-full" />
-					</HeroIcon>
-					<HeroIcon text="Notizie e avvisi" href="/avvisi">
-						<NewspaperIcon class="h-full w-full" />
-					</HeroIcon>
-					<HeroIcon text="Sostienici" href="/sostienici">
-						<HandshakeIcon class="h-full w-full" />
-					</HeroIcon>
-				</div>
+	<section class="hero min-h-[70vh] sm:min-h-[80vh] relative overflow-hidden">
+		<div class="absolute inset-0" aria-hidden="true">
+			{
+				heroImages.map((img, i) => (
+					<img
+						src={img.src}
+						alt=""
+						class:list={["hero-slide absolute inset-0 w-full h-full object-cover object-[center_30%]", { "is-active": i === 0 }]}
+					/>
+				))
+			}
+		</div>
+		<div class="hero-overlay bg-gradient-to-t from-black/85 via-black/45 to-black/10"></div>
+		<div class="hero-content text-center px-4 pb-20 sm:pb-24">
+			<div class="max-w-3xl flex flex-col items-center gap-4">
+				<p class="uppercase tracking-[0.2em] text-xs sm:text-sm text-white/70">Benvenuti</p>
+				<h1 class="font-display text-4xl sm:text-6xl font-medium text-white leading-tight">
+					Parrocchia <span class="italic">Santa Maria Addolorata</span>
+				</h1>
 			</div>
 		</div>
 	</section>
 
-	<Container class="py-16">
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+	<style>
+		.hero-slide {
+			opacity: 0;
+			transition: opacity 1.5s ease;
+		}
+		.hero-slide.is-active {
+			opacity: 1;
+		}
+	</style>
+
+	{
+		heroImages.length > 1 && (
+			<script>
+				const slides = document.querySelectorAll<HTMLImageElement>('.hero-slide');
+				let current = 0;
+				setInterval(() => {
+					slides[current].classList.remove('is-active');
+					current = (current + 1) % slides.length;
+					slides[current].classList.add('is-active');
+				}, 6000);
+			</script>
+		)
+	}
+
+	<div class="px-4">
+		<div class="max-w-3xl mx-auto -mt-10 sm:-mt-12 relative z-10 bg-base-100 rounded-2xl shadow-xl border border-base-300/60 grid grid-cols-3 divide-x divide-base-300/60">
 			{
-				highlights.map(({ href, title, description, Icon }) => (
-					<a href={href} class="card bg-base-200 hover:shadow-lg transition-shadow">
-						<div class="card-body">
-							<div class="h-8 w-8 text-primary mb-1">
-								<Icon class="h-full w-full" />
-							</div>
-							<h2 class="card-title">{title}</h2>
-							<p class="text-base-content/70">{description}</p>
+				quickLinks.map(({ href, label, Icon }) => (
+					<a
+						href={href}
+						class="flex flex-col items-center justify-center gap-2 py-5 px-2 text-center hover:bg-base-200/60 transition-colors first:rounded-l-2xl last:rounded-r-2xl"
+					>
+						<div class="h-6 w-6 text-primary shrink-0">
+							<Icon class="h-full w-full" />
 						</div>
+						<span class="text-xs sm:text-sm font-medium">{label}</span>
 					</a>
 				))
 			}
 		</div>
-	</Container>
+	</div>
 
 	{
-		latestEvents.length > 0 && (
-			<Container class="pb-16">
-				<div class="flex items-baseline justify-between mb-6">
-					<h2 class="text-2xl font-bold">Ultime notizie</h2>
+		featured && (
+			<Container class="pt-20 sm:pt-24 pb-16">
+				<div class="flex items-baseline justify-between mb-8">
+					<div>
+						<p class="uppercase tracking-widest text-xs text-primary font-semibold mb-1">In evidenza</p>
+						<h2 class="font-display text-3xl font-medium">Ultime notizie</h2>
+					</div>
 					<a href="/avvisi" class="link link-hover text-primary text-sm shrink-0 ml-4">
 						Vedi tutti gli avvisi →
 					</a>
 				</div>
 
-				<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-					{latestEvents.map((event) => (
-						<a
-							href={`/avvisi/${event.slug}`}
-							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
-						>
-							{event.image && (
-								<figure class="aspect-video">
-									<img
-										src={urlFor(event.image).width(600).height(340).auto('format').url()}
-										alt=""
-										class="w-full h-full object-cover"
-									/>
-								</figure>
-							)}
-							<div class="card-body">
-								<span class="text-xs text-base-content/60">
-									{dateFormatter.format(new Date(event.eventDate))}
-								</span>
-								<h3 class="card-title">{event.title}</h3>
-								<p class="text-base-content/70">{truncate(event.description)}</p>
-							</div>
-						</a>
-					))}
+				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					<a
+						href={`/avvisi/${featured.slug}`}
+						class={`group relative rounded-2xl overflow-hidden bg-base-200 min-h-[320px] flex items-end ${rest.length > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}`}
+					>
+						{featured.image && (
+							<img
+								src={urlFor(featured.image).width(900).height(600).auto('format').url()}
+								alt=""
+								class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+							/>
+						)}
+						<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+						<div class="relative p-6 text-white">
+							<span class="text-xs text-white/70">{dateFormatter.format(new Date(featured.eventDate))}</span>
+							<h3 class="font-display text-2xl font-medium mt-1">{featured.title}</h3>
+							<p class="text-white/80 text-sm mt-2 max-w-md">{truncate(featured.description, 120)}</p>
+						</div>
+					</a>
+
+					{rest.length > 0 && (
+						<div class="flex flex-col gap-4">
+							{rest.map((event) => (
+								<a
+									href={`/avvisi/${event.slug}`}
+									class="flex gap-4 bg-base-200 rounded-2xl p-4 hover:bg-base-300/60 transition-colors"
+								>
+									{event.image && (
+										<img
+											src={urlFor(event.image).width(160).height(160).auto('format').url()}
+											alt=""
+											class="w-20 h-20 rounded-xl object-cover shrink-0"
+										/>
+									)}
+									<div>
+										<span class="text-xs text-base-content/60">
+											{dateFormatter.format(new Date(event.eventDate))}
+										</span>
+										<h3 class="font-medium leading-snug mt-1">{event.title}</h3>
+									</div>
+								</a>
+							))}
+						</div>
+					)}
 				</div>
 			</Container>
 		)

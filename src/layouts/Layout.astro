@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
 ---
 
 <!doctype html>
@@ -8,13 +9,15 @@ import Navbar from "../components/Navbar.astro";
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<title>S. M. Addolorata</title>
 	</head>
 	<body class="bg-base-100">
 		<Navbar/>
 		<slot />
+		<Footer />
 	</body>
 </html>
 

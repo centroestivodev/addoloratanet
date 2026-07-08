@@ -1,0 +1,40 @@
+---
+import { address, contact, socials } from '../data/parish';
+---
+
+<footer class="footer sm:footer-horizontal bg-base-300 text-base-content px-6 sm:px-10 py-10">
+	<nav class="flex flex-col items-start">
+		<div class="flex items-center gap-2 mb-2">
+			<img src="/logo-icon.svg" alt="" class="h-8 w-8 rounded-full shadow-sm shrink-0" />
+			<span class="font-semibold">Parrocchia S. M. Addolorata</span>
+		</div>
+		<p class="max-w-60 text-sm text-base-content/70">{address}</p>
+	</nav>
+	<nav>
+		<h6 class="footer-title">Esplora</h6>
+		<a href="/" class="link link-hover">Home</a>
+		<a href="/info" class="link link-hover">La parrocchia</a>
+		<a href="/avvisi" class="link link-hover">Avvisi e notizie</a>
+		<a href="/blog" class="link link-hover">Blog</a>
+	</nav>
+	<nav>
+		<h6 class="footer-title">Contatti</h6>
+		<a href={contact.phoneHref} class="link link-hover">{contact.phone}</a>
+		<a href={`mailto:${contact.email}`} class="link link-hover">{contact.email}</a>
+	</nav>
+	<nav>
+		<h6 class="footer-title">Seguici</h6>
+		<div class="flex flex-col gap-1">
+			{
+				socials.map((social) => (
+					<a href={social.href} target="_blank" rel="noopener noreferrer" class="link link-hover">
+						{social.name}
+					</a>
+				))
+			}
+		</div>
+	</nav>
+</footer>
+<div class="bg-base-300 border-t border-base-content/10 px-6 sm:px-10 py-4 text-center text-xs text-base-content/60">
+	© {new Date().getFullYear()} Parrocchia Santa Maria Addolorata
+</div>

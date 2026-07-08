@@ -1,2 +1,45 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@import "@fontsource-variable/fraunces";
+
+@plugin "daisyui" {
+	themes: autumn --default;
+}
+
+@plugin "daisyui/theme" {
+	name: "autumn-dark";
+	default: false;
+	prefersdark: true;
+	color-scheme: dark;
+	--color-base-100: oklch(18% 0.012 40);
+	--color-base-200: oklch(22% 0.014 40);
+	--color-base-300: oklch(27% 0.016 40);
+	--color-base-content: oklch(93% 0.008 40);
+	--color-primary: oklch(62% 0.17 17.53);
+	--color-primary-content: oklch(97% 0.02 17.53);
+	--color-secondary: oklch(66% 0.16 23.865);
+	--color-secondary-content: oklch(15% 0.03 23.865);
+	--color-accent: oklch(78% 0.1 60.729);
+	--color-accent-content: oklch(18% 0.02 60.729);
+	--color-neutral: oklch(32% 0.02 51.902);
+	--color-neutral-content: oklch(90% 0.007 51.902);
+	--color-info: oklch(72% 0.11 207.284);
+	--color-info-content: oklch(15% 0.02 207.284);
+	--color-success: oklch(66% 0.1 174.616);
+	--color-success-content: oklch(14% 0.018 174.616);
+	--color-warning: oklch(74% 0.17 56.844);
+	--color-warning-content: oklch(16% 0.032 56.844);
+	--color-error: oklch(63% 0.22 24.16);
+	--color-error-content: oklch(94% 0.05 24.16);
+	--radius-selector: 1rem;
+	--radius-field: 0.5rem;
+	--radius-box: 1rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+@theme {
+	--font-display: "Fraunces Variable", serif;
+}

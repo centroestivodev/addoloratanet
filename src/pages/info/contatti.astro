@@ -4,13 +4,7 @@ import Container from "../../components/Container.astro";
 import PhoneIcon from "../../assets/icons/phone.svg";
 import MailIcon from "../../assets/icons/mail.svg";
 import ClockIcon from "../../assets/icons/clock.svg";
-
-const socials = [
-	{ name: "Facebook", href: "https://facebook.com/smaddolorata" },
-	{ name: "Instagram", href: "https://instagram.com/giovani_addolorata" },
-	{ name: "YouTube", href: "https://www.youtube.com/channel/UCss8ZJSwWIh7Yj_Lz-9ImMw" },
-	{ name: "Twitter", href: "https://twitter.com/smaddolorata" },
-];
+import { contact, parroco, socials } from "../../data/parish";
 ---
 
 <Layout>
@@ -28,11 +22,11 @@ const socials = [
 					<ul class="flex flex-col gap-2 mt-2">
 						<li class="flex items-center gap-2">
 							<PhoneIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href="tel:+39062593161">06 259 3161</a>
+							<a class="link link-hover" href={contact.phoneHref}>{contact.phone}</a>
 						</li>
 						<li class="flex items-center gap-2">
 							<MailIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href="mailto:smaddolorata@gmail.com">smaddolorata@gmail.com</a>
+							<a class="link link-hover" href={`mailto:${contact.email}`}>{contact.email}</a>
 						</li>
 						<li class="flex items-center gap-2">
 							<ClockIcon class="h-5 w-5 text-primary shrink-0" />
@@ -45,11 +39,11 @@ const socials = [
 			<div class="card bg-base-200">
 				<div class="card-body">
 					<h2 class="card-title">Parroco</h2>
-					<p class="font-medium mt-2">Don Antonio d'Errico</p>
+					<p class="font-medium mt-2">{parroco.name}</p>
 					<ul class="flex flex-col gap-2 mt-2">
 						<li class="flex items-center gap-2">
 							<MailIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href="mailto:antonioderrico66@gmail.com">antonioderrico66@gmail.com</a>
+							<a class="link link-hover" href={`mailto:${parroco.email}`}>{parroco.email}</a>
 						</li>
 					</ul>
 				</div>
