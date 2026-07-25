@@ -23,7 +23,10 @@ const events = await sanityClient.fetch<Event[]>(
 const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
 ---
 
-<Layout>
+<Layout
+	title="Avvisi e notizie"
+	description="Le ultime comunicazioni, gli eventi e le iniziative della Parrocchia Santa Maria Addolorata."
+>
 	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Avvisi e notizie</h1>
 		<p class="text-base-content/70 mb-10">
@@ -44,8 +47,12 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 								<figure class="aspect-video">
 									<img
 										src={urlFor(event.image).width(600).height(340).auto("format").url()}
-										alt=""
+										width="600"
+										height="340"
+										alt={event.title}
 										class="w-full h-full object-cover"
+										loading="lazy"
+										decoding="async"
 									/>
 								</figure>
 							)}

@@ -4,6 +4,7 @@ import Container from "../../components/Container.astro";
 import PortableTextBody from "../../components/PortableTextBody";
 import { sanityClient } from "sanity:client";
 import { urlFor } from "../../sanity/lib/image";
+import { toPlainText } from "../../sanity/lib/portableText";
 
 export async function getStaticPaths() {
 	const posts = await sanityClient.fetch<{ slug: string }[]>(
@@ -16,7 +17,8 @@ const { slug } = Astro.params;
 
 const post = await sanityClient.fetch(
 	`*[_type == "post" && slug.current == $slug][0]{
-		title, images, body, _createdAt
+		title, images, body, _createdAt,
+		"imageDimensions": images[0].asset->metadata.dimensions
 	}`,
 	{ slug }
 );
@@ -26,9 +28,13 @@ if (!post) {
 }
 
 const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+const imageWidth = 1200;
+const imageHeight = post.imageDimensions
+	? Math.round((imageWidth * post.imageDimensions.height) / post.imageDimensions.width)
+	: undefined;
 ---
 
-<Layout>
+<Layout title={post.title} description={toPlainText(post.body, 160)}>
 	<Container class="py-12">
 		<div class="max-w-3xl mx-auto">
 			<a href="/blog" class="link link-hover text-sm text-base-content/60">← Blog</a>
@@ -41,9 +47,13 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 			{
 				post.images?.[0] && (
 					<img
-						src={urlFor(post.images[0]).width(1200).auto("format").url()}
-						alt=""
-						class="rounded-box mb-8 w-full"
+						src={urlFor(post.images[0]).width(imageWidth).auto("format").url()}
+						width={imageWidth}
+						height={imageHeight}
+						alt={post.title}
+						class="rounded-box mb-8 w-full h-auto"
+						loading="eager"
+						decoding="async"
 					/>
 				)
 			}

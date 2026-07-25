@@ -4,6 +4,7 @@ import ChurchIcon from '../assets/icons/church.svg';
 import NewspaperIcon from '../assets/icons/newspaper.svg';
 import HandshakeIcon from '../assets/icons/handshake.svg';
 import Container from '../components/Container.astro';
+import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { sanityClient } from 'sanity:client';
 import { urlFor } from '../sanity/lib/image';
@@ -43,15 +44,22 @@ const quickLinks = [
 ];
 ---
 
-<Layout>
+<Layout description="Parrocchia Santa Maria Addolorata a Roma: orari delle messe, avvisi, notizie e attività della comunità parrocchiale.">
 	<section class="hero min-h-[70vh] sm:min-h-[80vh] relative overflow-hidden">
 		<div class="absolute inset-0" aria-hidden="true">
 			{
 				heroImages.map((img, i) => (
-					<img
-						src={img.src}
+					<Image
+						src={img}
+						widths={[640, 1024, 1600, 2000]}
+						sizes="100vw"
+						format="webp"
+						quality={75}
 						alt=""
 						class:list={["hero-slide absolute inset-0 w-full h-full object-cover object-[center_30%]", { "is-active": i === 0 }]}
+						loading={i === 0 ? "eager" : "lazy"}
+						decoding="async"
+						fetchpriority={i === 0 ? "high" : "auto"}
 					/>
 				))
 			}
@@ -130,8 +138,12 @@ const quickLinks = [
 						{featured.image && (
 							<img
 								src={urlFor(featured.image).width(900).height(600).auto('format').url()}
-								alt=""
+								width="900"
+								height="600"
+								alt={featured.title}
 								class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+								loading="eager"
+								decoding="async"
 							/>
 						)}
 						<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
@@ -152,8 +164,12 @@ const quickLinks = [
 									{event.image && (
 										<img
 											src={urlFor(event.image).width(160).height(160).auto('format').url()}
-											alt=""
+											width="160"
+											height="160"
+											alt={event.title}
 											class="w-20 h-20 rounded-xl object-cover shrink-0"
+											loading="lazy"
+											decoding="async"
 										/>
 									)}
 									<div>
