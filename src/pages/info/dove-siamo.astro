@@ -12,7 +12,10 @@ const bbox = [lon - 0.01, lat - 0.006, lon + 0.01, lat + 0.006].join(",");
 const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
 ---
 
-<Layout>
+<Layout
+	title="Dove siamo"
+	description="Indirizzo e indicazioni stradali per raggiungere la Parrocchia Santa Maria Addolorata a Roma."
+>
 	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Dove siamo</h1>
 		<p class="text-base-content/70 mb-10">

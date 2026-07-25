@@ -23,7 +23,10 @@ const posts = await sanityClient.fetch<Post[]>(
 const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
 ---
 
-<Layout>
+<Layout
+	title="Blog"
+	description="Racconti, riflessioni e momenti di vita comunitaria della Parrocchia Santa Maria Addolorata."
+>
 	<Container class="py-12">
 		<h1 class="text-3xl font-bold mb-2">Blog</h1>
 		<p class="text-base-content/70 mb-10">La parrocchia in diretta: racconti, riflessioni e momenti di vita comunitaria.</p>
@@ -42,8 +45,12 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 								<figure class="aspect-video">
 									<img
 										src={urlFor(post.images[0]).width(600).height(340).auto("format").url()}
-										alt=""
+										width="600"
+										height="340"
+										alt={post.title}
 										class="w-full h-full object-cover"
+										loading="lazy"
+										decoding="async"
 									/>
 								</figure>
 							)}

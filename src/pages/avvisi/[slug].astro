@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
 import { sanityClient } from "sanity:client";
 import { urlFor } from "../../sanity/lib/image";
+import { truncate } from "../../sanity/lib/text";
 
 export async function getStaticPaths() {
 	const events = await sanityClient.fetch<{ slug: string }[]>(
@@ -15,7 +16,8 @@ const { slug } = Astro.params;
 
 const event = await sanityClient.fetch(
 	`*[_type == "event" && slug.current == $slug][0]{
-		title, description, image, eventDate
+		title, description, image, eventDate,
+		"imageDimensions": image.asset->metadata.dimensions
 	}`,
 	{ slug }
 );
@@ -25,9 +27,13 @@ if (!event) {
 }
 
 const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+const imageWidth = 1200;
+const imageHeight = event.imageDimensions
+	? Math.round((imageWidth * event.imageDimensions.height) / event.imageDimensions.width)
+	: undefined;
 ---
 
-<Layout>
+<Layout title={event.title} description={truncate(event.description, 160)}>
 	<Container class="py-12">
 		<div class="max-w-3xl mx-auto">
 			<a href="/avvisi" class="link link-hover text-sm text-base-content/60">← Avvisi e notizie</a>
@@ -40,9 +46,13 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 			{
 				event.image && (
 					<img
-						src={urlFor(event.image).width(1200).auto("format").url()}
-						alt=""
-						class="rounded-box mb-8 w-full"
+						src={urlFor(event.image).width(imageWidth).auto("format").url()}
+						width={imageWidth}
+						height={imageHeight}
+						alt={event.title}
+						class="rounded-box mb-8 w-full h-auto"
+						loading="eager"
+						decoding="async"
 					/>
 				)
 			}
