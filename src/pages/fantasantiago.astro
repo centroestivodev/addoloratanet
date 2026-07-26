@@ -1,0 +1,12 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/Container.astro";
+import Classifica from "../components/Classifica.vue";
+---
+
+<Layout title="FantaSantiago" description="Classifica del FantaSantiago." noindex>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">FantaSantiago</h1>
+		<Classifica client:load />
+	</Container>
+</Layout>
