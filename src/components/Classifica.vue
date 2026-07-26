@@ -75,6 +75,9 @@ function formatDate(isoDate: string): string {
 }
 
 async function fetchCsvRows(url: string): Promise<Record<string, string>[]> {
+	if (!url) {
+		throw new Error("URL del foglio non configurato");
+	}
 	const separator = url.includes("?") ? "&" : "?";
 	const response = await fetch(`${url}${separator}_t=${Date.now()}`);
 	if (!response.ok) {
