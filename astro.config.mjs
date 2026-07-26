@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 import sanity from "@sanity/astro";
 import react from "@astrojs/react";
+import vue from "@astrojs/vue";
 import netlify from "@astrojs/netlify";
 
 // https://astro.build/config
@@ -19,5 +20,5 @@ export default defineConfig({
 	dataset: 'addoloratanet',
 	useCdn: false,
 	studioBasePath: '/admin'
-  }), react()]
+  }), react(), vue()]
 });
