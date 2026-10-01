@@ -4,3 +4,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Il blog è confluito nelle notizie
+[[redirects]]
+  from = "/blog"
+  to = "/notizie"
+  status = 301
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/notizie/:splat"
+  status = 301

@@ -4,6 +4,7 @@ import Container from "../../components/Container.astro";
 import { sanityClient } from "sanity:client";
 import { urlFor } from "../../sanity/lib/image";
 import { truncate } from "../../sanity/lib/text";
+import { formatEventDate } from "../../sanity/lib/eventDate";
 
 export async function getStaticPaths() {
 	const events = await sanityClient.fetch<{ slug: string }[]>(
@@ -16,17 +17,17 @@ const { slug } = Astro.params;
 
 const event = await sanityClient.fetch(
 	`*[_type == "event" && slug.current == $slug][0]{
-		title, description, image, eventDate,
-		"imageDimensions": image.asset->metadata.dimensions
+		title, description, image, eventDate, startTime, endDate, endTime,
+		"imageDimensions": image.asset->metadata.dimensions,
+		"relatedPost": relatedPost->{ title, "slug": slug.current }
 	}`,
 	{ slug }
 );
 
 if (!event) {
-	return Astro.redirect("/avvisi");
+	return Astro.redirect("/eventi");
 }
 
-const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
 const imageWidth = 1200;
 const imageHeight = event.imageDimensions
 	? Math.round((imageWidth * event.imageDimensions.height) / event.imageDimensions.width)
@@ -36,10 +37,10 @@ const imageHeight = event.imageDimensions
 <Layout title={event.title} description={truncate(event.description, 160)}>
 	<Container class="py-12">
 		<div class="max-w-3xl mx-auto">
-			<a href="/avvisi" class="link link-hover text-sm text-base-content/60">← Avvisi e notizie</a>
+			<a href="/eventi" class="link link-hover text-sm text-base-content/60">← Calendario</a>
 
 			<span class="block text-xs text-base-content/60 mt-4">
-				{dateFormatter.format(new Date(event.eventDate))}
+				{formatEventDate(event)}
 			</span>
 			<h1 class="text-3xl font-bold mt-2 mb-6">{event.title}</h1>
 
@@ -49,7 +50,7 @@ const imageHeight = event.imageDimensions
 						src={urlFor(event.image).width(imageWidth).auto("format").url()}
 						width={imageWidth}
 						height={imageHeight}
-						alt={event.title}
+						alt={event.image.alt || event.title}
 						class="rounded-box mb-8 w-full h-auto"
 						loading="eager"
 						decoding="async"
@@ -58,6 +59,14 @@ const imageHeight = event.imageDimensions
 			}
 
 			<p class="whitespace-pre-line leading-relaxed">{event.description}</p>
+
+			{
+				event.relatedPost?.slug && (
+					<a href={`/notizie/${event.relatedPost.slug}`} class="link link-primary inline-block mt-8">
+						Leggi di più: {event.relatedPost.title} →
+					</a>
+				)
+			}
 		</div>
 	</Container>
 </Layout>
