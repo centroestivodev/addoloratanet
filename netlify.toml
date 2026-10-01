@@ -15,3 +15,194 @@
   from = "/blog/*"
   to = "/notizie/:splat"
   status = 301
+
+# Redirect dal vecchio sito WordPress (generati da migrazione/scripts/costruisci_import.py)
+[[redirects]]
+  from = "/festa-santa-maria-addolorata"
+  to = "/notizie/festa-santa-maria-addolorata"
+  status = 301
+
+[[redirects]]
+  from = "/giubileo-dei-giovani-2025"
+  to = "/notizie/giubileo-dei-giovani-2025"
+  status = 301
+
+[[redirects]]
+  from = "/visita-giubilare-san-giovanni"
+  to = "/notizie/visita-giubilare-san-giovanni"
+  status = 301
+
+[[redirects]]
+  from = "/carovana-della-pace-2025"
+  to = "/notizie/carovana-della-pace-2025"
+  status = 301
+
+[[redirects]]
+  from = "/messa-di-saluto-a-don-luis"
+  to = "/notizie/messa-di-saluto-a-don-luis"
+  status = 301
+
+[[redirects]]
+  from = "/festa-della-parrocchia-programma"
+  to = "/notizie/festa-della-parrocchia-programma"
+  status = 301
+
+[[redirects]]
+  from = "/avvisi-della-domenica-15-10-2033"
+  to = "/notizie/avvisi-della-domenica-27-09-2026"
+  status = 301
+
+[[redirects]]
+  from = "/lotteria-della-parrocchia-biglietti-vincenti"
+  to = "/notizie/lotteria-della-parrocchia-biglietti-vincenti"
+  status = 301
+
+[[redirects]]
+  from = "/biglietti-vincenti-lotteria-della-festa-della-parrocchia"
+  to = "/notizie/biglietti-vincenti-lotteria-della-festa-della-parrocchia"
+  status = 301
+
+[[redirects]]
+  from = "/iscrizioni-al-catechismo"
+  to = "/notizie/iscrizioni-al-catechismo"
+  status = 301
+
+[[redirects]]
+  from = "/catechismo-2025-2026"
+  to = "/notizie/catechismo-2026-2027"
+  status = 301
+
+[[redirects]]
+  from = "/percorso-per-fidanzati-cresima-adulti"
+  to = "/notizie/percorso-fidanzati-e-cresima-adulti-2026-2027"
+  status = 301
+
+[[redirects]]
+  from = "/orari-ss-messe-da-venerdi-1-maggio-a-lunedi-31-agosto-2026"
+  to = "/notizie/orari-ss-messe-da-venerdi-1-maggio-a-lunedi-31-agosto-2026"
+  status = 301
+
+[[redirects]]
+  from = "/terremoto-in-venezuela"
+  to = "/notizie/terremoto-in-venezuela"
+  status = 301
+
+[[redirects]]
+  from = "/lavori-straordinari-per-la-manutenzione-dellimmobile-ex-chiesa"
+  to = "/notizie/lavori-straordinari-per-la-manutenzione-dellimmobile-ex-chiesa"
+  status = 301
+
+[[redirects]]
+  from = "/habemus-papam-leone-xiv"
+  to = "/notizie/habemus-papam-leone-xiv"
+  status = 301
+
+[[redirects]]
+  from = "/oggi-3-maggio-2025-e-entrato-nella-luce-del-risorto-don-angelo-minetti"
+  to = "/notizie/oggi-3-maggio-2025-e-entrato-nella-luce-del-risorto-don-angelo-minetti"
+  status = 301
+
+[[redirects]]
+  from = "/papa-francesco"
+  to = "/notizie/papa-francesco"
+  status = 301
+
+[[redirects]]
+  from = "/ciao-vincenzo"
+  to = "/notizie/ciao-vincenzo"
+  status = 301
+
+[[redirects]]
+  from = "/selfie-presepe-2024-video"
+  to = "/notizie/selfie-presepe-2024-video"
+  status = 301
+
+[[redirects]]
+  from = "/lectio-divina-2"
+  to = "/notizie/lectio-divina-2"
+  status = 301
+
+[[redirects]]
+  from = "/sabati-culturali-2025-2026"
+  to = "/notizie/sabati-culturali-2025-2026"
+  status = 301
+
+[[redirects]]
+  from = "/la-grammatica-dellamore"
+  to = "/notizie/la-grammatica-dellamore"
+  status = 301
+
+[[redirects]]
+  from = "/so-stare-bene-in-famiglia"
+  to = "/notizie/so-stare-bene-in-famiglia"
+  status = 301
+
+[[redirects]]
+  from = "/attivita/so-stare-bene-abitare-la-vita"
+  to = "/notizie/so-stare-bene-in-famiglia"
+  status = 301
+
+[[redirects]]
+  from = "/festa-del-ciao-2"
+  to = "/eventi/festa-del-ciao-2026"
+  status = 301
+
+[[redirects]]
+  from = "/gara-di-torte"
+  to = "/eventi/gara-di-torte-2026"
+  status = 301
+
+[[redirects]]
+  from = "/pellegrinaggio-a-lourdes-2026"
+  to = "/eventi/pellegrinaggio-a-lourdes-2026"
+  status = 301
+
+[[redirects]]
+  from = "/category/avvisi"
+  to = "/notizie"
+  status = 301
+
+[[redirects]]
+  from = "/category/smadlive"
+  to = "/notizie"
+  status = 301
+
+[[redirects]]
+  from = "/category/video"
+  to = "/notizie"
+  status = 301
+
+[[redirects]]
+  from = "/agenda"
+  to = "/eventi"
+  status = 301
+
+[[redirects]]
+  from = "/agenda-eventi-e-attivita"
+  to = "/eventi"
+  status = 301
+
+[[redirects]]
+  from = "/info-parrocchia"
+  to = "/info"
+  status = 301
+
+[[redirects]]
+  from = "/info-parrocchia/orari-parrocchia"
+  to = "/info/orari"
+  status = 301
+
+[[redirects]]
+  from = "/info-parrocchia/contatti"
+  to = "/info/contatti"
+  status = 301
+
+[[redirects]]
+  from = "/dove-siamo"
+  to = "/info/dove-siamo"
+  status = 301
+
+[[redirects]]
+  from = "/attivita"
+  to = "/info/attivita"
+  status = 301
