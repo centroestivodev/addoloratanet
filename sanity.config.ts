@@ -1,5 +1,6 @@
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
+import {colorInput} from '@sanity/color-input'
 import {schemaTypes} from './src/sanity/schemaTypes/index'
 
 export default defineConfig({
@@ -7,7 +8,7 @@ export default defineConfig({
   title: 'addoloratanet',
   projectId: 'bomj2fjw',
   dataset: 'addoloratanet',
-  plugins: [structureTool()],
+  plugins: [structureTool(), colorInput()],
   schema: {
     types: schemaTypes,
   },
