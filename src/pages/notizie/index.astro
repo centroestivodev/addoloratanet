@@ -4,6 +4,7 @@ import Container from "../../components/Container.astro";
 import { sanityClient } from "sanity:client";
 import { urlFor } from "../../sanity/lib/image";
 import { toPlainText } from "../../sanity/lib/portableText";
+import { badgeLabel } from "../../sanity/lib/badges";
 
 interface Post {
 	_id: string;
@@ -11,12 +12,14 @@ interface Post {
 	slug: string;
 	images?: any[];
 	body: any[];
-	_createdAt: string;
+	publishedAt: string;
+	badge?: string;
 }
 
 const posts = await sanityClient.fetch<Post[]>(
-	`*[_type == "post" && defined(slug.current)] | order(_createdAt desc){
-		_id, title, "slug": slug.current, images, body, _createdAt
+	`*[_type == "post" && defined(slug.current)] | order(coalesce(publishedAt, _createdAt) desc){
+		_id, title, "slug": slug.current, images, body, badge,
+		"publishedAt": coalesce(publishedAt, _createdAt)
 	}`
 );
 
@@ -24,21 +27,21 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 ---
 
 <Layout
-	title="Blog"
-	description="Racconti, riflessioni e momenti di vita comunitaria della Parrocchia Santa Maria Addolorata."
+	title="Avvisi e notizie"
+	description="Le comunicazioni, le notizie e i racconti della Parrocchia Santa Maria Addolorata."
 >
 	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Blog</h1>
-		<p class="text-base-content/70 mb-10">La parrocchia in diretta: racconti, riflessioni e momenti di vita comunitaria.</p>
+		<h1 class="text-3xl font-bold mb-2">Avvisi e notizie</h1>
+		<p class="text-base-content/70 mb-10">Le comunicazioni, le notizie e i racconti della vita della parrocchia.</p>
 
 		{
 			posts.length === 0 ? (
-				<p class="text-base-content/60">Non ci sono ancora articoli pubblicati.</p>
+				<p class="text-base-content/60">Non ci sono ancora avvisi pubblicati.</p>
 			) : (
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					{posts.map((post) => (
 						<a
-							href={`/blog/${post.slug}`}
+							href={`/notizie/${post.slug}`}
 							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
 						>
 							{post.images?.[0] && (
@@ -47,7 +50,7 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 										src={urlFor(post.images[0]).width(600).height(340).auto("format").url()}
 										width="600"
 										height="340"
-										alt={post.title}
+										alt={post.images[0].alt || post.title}
 										class="w-full h-full object-cover"
 										loading="lazy"
 										decoding="async"
@@ -56,8 +59,11 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: 
 							)}
 							<div class="card-body">
 								<span class="text-xs text-base-content/60">
-									{dateFormatter.format(new Date(post._createdAt))}
+									{dateFormatter.format(new Date(post.publishedAt))}
 								</span>
+								{badgeLabel(post.badge) && (
+									<span class="badge badge-primary badge-outline badge-sm">{badgeLabel(post.badge)}</span>
+								)}
 								<h2 class="card-title">{post.title}</h2>
 								<p class="text-base-content/70">{toPlainText(post.body)}</p>
 							</div>

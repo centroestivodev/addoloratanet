@@ -1,0 +1,109 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import PortableTextBody from "../../components/PortableTextBody";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+import { toPlainText } from "../../sanity/lib/portableText";
+import { badgeLabel } from "../../sanity/lib/badges";
+import { formatEventDate, type EventSchedule } from "../../sanity/lib/eventDate";
+
+export async function getStaticPaths() {
+	const posts = await sanityClient.fetch<{ slug: string }[]>(
+		`*[_type == "post" && defined(slug.current)]{ "slug": slug.current }`
+	);
+	return posts.map((post) => ({ params: { slug: post.slug } }));
+}
+
+const { slug } = Astro.params;
+
+const post = await sanityClient.fetch(
+	`*[_type == "post" && slug.current == $slug][0]{
+		title, images, body, badge,
+		"publishedAt": coalesce(publishedAt, _createdAt),
+		"imageDimensions": images[0].asset->metadata.dimensions,
+		"attachments": attachments[]{ title, "url": asset->url, "filename": asset->originalFilename },
+		"events": *[_type == "event" && references(^._id) && defined(slug.current)] | order(eventDate asc, startTime asc){
+			_id, title, "slug": slug.current, eventDate, startTime, endDate, endTime
+		}
+	}`,
+	{ slug }
+);
+
+if (!post) {
+	return Astro.redirect("/notizie");
+}
+
+const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+const imageWidth = 1200;
+const imageHeight = post.imageDimensions
+	? Math.round((imageWidth * post.imageDimensions.height) / post.imageDimensions.width)
+	: undefined;
+---
+
+<Layout title={post.title} description={toPlainText(post.body, 160)}>
+	<Container class="py-12">
+		<div class="max-w-3xl mx-auto">
+			<a href="/notizie" class="link link-hover text-sm text-base-content/60">← Avvisi e notizie</a>
+
+			<span class="block text-xs text-base-content/60 mt-4">
+				{dateFormatter.format(new Date(post.publishedAt))}
+			</span>
+			{badgeLabel(post.badge) && (
+				<span class="badge badge-primary badge-outline mt-3">{badgeLabel(post.badge)}</span>
+			)}
+			<h1 class="text-3xl font-bold mt-2 mb-6">{post.title}</h1>
+
+			{
+				post.images?.[0] && (
+					<img
+						src={urlFor(post.images[0]).width(imageWidth).auto("format").url()}
+						width={imageWidth}
+						height={imageHeight}
+						alt={post.images[0].alt || post.title}
+						class="rounded-box mb-8 w-full h-auto"
+						loading="eager"
+						decoding="async"
+					/>
+				)
+			}
+
+			<PortableTextBody value={post.body} />
+
+			{
+				post.attachments?.length > 0 && (
+					<section class="mt-10">
+						<h2 class="text-xl font-bold mb-3">Allegati</h2>
+						<ul class="space-y-2">
+							{post.attachments.map((file: { title?: string; url?: string; filename?: string }) => (
+								<li>
+									<a href={file.url} class="link link-primary" target="_blank" rel="noopener noreferrer">
+										{file.title || file.filename}
+									</a>
+								</li>
+							))}
+						</ul>
+					</section>
+				)
+			}
+
+			{
+				post.events?.length > 0 && (
+					<section class="mt-10">
+						<h2 class="text-xl font-bold mb-3">Gli incontri</h2>
+						<ul class="divide-y divide-base-300 border-y border-base-300">
+							{post.events.map((event: EventSchedule & { _id: string; title: string; slug: string }) => (
+								<li>
+									<a href={`/eventi/${event.slug}`} class="flex flex-col sm:flex-row sm:gap-4 py-3 hover:bg-base-200/60 transition-colors">
+										<span class="text-sm text-base-content/60 sm:w-64 shrink-0">{formatEventDate(event)}</span>
+										<span class="font-medium">{event.title}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</section>
+				)
+			}
+		</div>
+	</Container>
+</Layout>

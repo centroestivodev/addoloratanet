@@ -1,0 +1,96 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import { sanityClient } from "sanity:client";
+import { urlFor } from "../../sanity/lib/image";
+import { truncate } from "../../sanity/lib/text";
+import { formatEventDate, todayInRome } from "../../sanity/lib/eventDate";
+
+// Pagina generata a ogni richiesta, per separare i prossimi eventi da quelli passati in base a oggi
+export const prerender = false;
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+
+interface Event {
+	_id: string;
+	title: string;
+	slug: string;
+	description: string;
+	image?: any;
+	eventDate: string;
+	startTime?: string;
+	endDate?: string;
+	endTime?: string;
+}
+
+const { upcoming, past } = await sanityClient.fetch<{ upcoming: Event[]; past: Event[] }>(
+	`{
+		"upcoming": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
+			| order(eventDate asc, startTime asc){
+			_id, title, "slug": slug.current, description, image, eventDate, startTime, endDate, endTime
+		},
+		"past": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) < $today]
+			| order(eventDate desc, startTime desc){
+			_id, title, "slug": slug.current, description, image, eventDate, startTime, endDate, endTime
+		}
+	}`,
+	{ today: todayInRome() }
+);
+
+const sections = [
+	{ title: "Prossimi appuntamenti", events: upcoming, empty: "Al momento non ci sono appuntamenti in programma." },
+	{ title: "Eventi passati", events: past, empty: "" },
+];
+---
+
+<Layout
+	title="Calendario"
+	description="Gli appuntamenti, le celebrazioni e le iniziative della Parrocchia Santa Maria Addolorata."
+>
+	<Container class="py-12">
+		<h1 class="text-3xl font-bold mb-2">Calendario</h1>
+		<p class="text-base-content/70 mb-10">
+			Gli appuntamenti, le celebrazioni e le iniziative della parrocchia.
+		</p>
+
+		{
+			sections.map((section) =>
+				section.events.length === 0 ? (
+					section.empty && <p class="text-base-content/60 mb-12">{section.empty}</p>
+				) : (
+					<section class="mb-12">
+						<h2 class="text-xl font-bold mb-6">{section.title}</h2>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+							{section.events.map((event) => (
+								<a
+									href={`/eventi/${event.slug}`}
+									class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
+								>
+									{event.image && (
+										<figure class="aspect-video">
+											<img
+												src={urlFor(event.image).width(600).height(340).auto("format").url()}
+												width="600"
+												height="340"
+												alt={event.image.alt || event.title}
+												class="w-full h-full object-cover"
+												loading="lazy"
+												decoding="async"
+											/>
+										</figure>
+									)}
+									<div class="card-body">
+										<span class="text-xs text-base-content/60">{formatEventDate(event)}</span>
+										<h3 class="card-title">{event.title}</h3>
+										<p class="text-base-content/70">{truncate(event.description)}</p>
+									</div>
+								</a>
+							))}
+						</div>
+					</section>
+				)
+			)
+		}
+	</Container>
+</Layout>
