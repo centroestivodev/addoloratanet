@@ -1,0 +1,80 @@
+---
+interface Props {
+	date: string;
+	tone?: "brand" | "navy";
+	size?: "sm" | "md";
+	showWeekday?: boolean;
+	class?: string;
+}
+
+const MESI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+const GIORNI = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+
+const { date, tone = "brand", size = "md", showWeekday = false, class: className } = Astro.props;
+// Data di calendario "YYYY-MM-DD", letta in UTC per non slittare col fuso del server
+const [y, m, d] = date.slice(0, 10).split("-").map(Number);
+const day = new Date(Date.UTC(y, m - 1, d));
+---
+
+<div class:list={["date-badge", `date-badge--${tone}`, `date-badge--${size}`, className]} aria-hidden="true">
+	{showWeekday && <span class="date-badge__weekday">{GIORNI[day.getUTCDay()]}</span>}
+	<span class="date-badge__day">{day.getUTCDate()}</span>
+	<span class="date-badge__month">{MESI[day.getUTCMonth()]}</span>
+</div>
+
+<style>
+	.date-badge {
+		width: 64px;
+		min-width: 64px;
+		padding: 9px 0;
+		border-radius: var(--radius-md);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		box-sizing: border-box;
+		font-family: var(--font-sans);
+	}
+	.date-badge--sm {
+		width: 52px;
+		min-width: 52px;
+		padding: 6px 0;
+	}
+	.date-badge--brand {
+		background: var(--teal-50);
+		color: var(--teal-800);
+		--date-badge-accent: var(--teal-700);
+	}
+	.date-badge--navy {
+		background: var(--navy-700);
+		color: #fff;
+		--date-badge-accent: var(--teal-200);
+	}
+	.date-badge__weekday {
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		line-height: 1.3;
+		color: var(--date-badge-accent);
+	}
+	.date-badge__day {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 28px;
+		line-height: 1;
+		font-variant-numeric: lining-nums;
+	}
+	.date-badge--sm .date-badge__day {
+		font-size: 22px;
+	}
+	.date-badge__month {
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		line-height: 1.3;
+		color: var(--date-badge-accent);
+	}
+</style>

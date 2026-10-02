@@ -1,0 +1,74 @@
+/* Santa Maria Addolorata — colour tokens (light theme only).
+   Brand hues are taken from the logo: teal ring, navy Madonna, ochre church/cross.
+   Logo magenta + green are reserved for the mark itself (see --logo-*). */
+:root{
+  /* Logo source colours (reference only) */
+  --logo-teal:#3ba8bb;--logo-navy:#0f3c73;--logo-ochre:#cb881b;--logo-magenta:#cb1b7f;--logo-green:#0f7118;
+
+  /* Teal — primary brand hue (logo ring, redesign theme-color) */
+  --teal-50:#eef8fa;--teal-100:#d5eef2;--teal-200:#ade0e8;--teal-300:#7ccbd8;--teal-400:#55b8c8;--teal-500:#3ba8bb;--teal-600:#2b8b9d;--teal-700:#1f6f7e;--teal-800:#185865;--teal-900:#11414b;
+
+  /* Navy — ink & primary action (logo Madonna) */
+  --navy-50:#eef3fa;--navy-100:#d6e2f1;--navy-200:#aec4e3;--navy-300:#7c9ecd;--navy-400:#4b74b0;--navy-500:#2a5694;--navy-600:#1a4783;--navy-700:#0f3c73;--navy-800:#0c2f5a;--navy-900:#0a2443;
+
+  /* Ochre — warm accent, festivity, highlights (logo church & cross) */
+  --ochre-50:#fcf5e9;--ochre-100:#f7e6c6;--ochre-200:#efcd8f;--ochre-300:#e4b05a;--ochre-400:#d79a33;--ochre-500:#cb881b;--ochre-600:#a96f12;--ochre-700:#87570f;--ochre-800:#66420d;--ochre-900:#4a300a;
+
+  /* Stone — warm neutrals (tufo & travertino of the church) */
+  --stone-0:#ffffff;--stone-25:#fbfaf8;--stone-50:#f6f4f0;--stone-100:#eeebe5;--stone-200:#e2ddd4;--stone-300:#cbc4b8;--stone-400:#a49c8f;--stone-500:#7d766b;--stone-600:#5d574e;--stone-700:#433f39;--stone-800:#2d2a26;--stone-900:#1c1a17;
+
+  /* Ink — navy-tinted text */
+  --ink-900:#14233a;--ink-700:#34404f;--ink-500:#5f6874;--ink-400:#7f8792;
+
+  /* Status */
+  --green-50:#ebf5ec;--green-600:#1f7a2a;--green-700:#0f7118;
+  --red-50:#fbecea;--red-600:#b3261e;--red-700:#8f1d17;
+
+  /* ---------- Semantic aliases ---------- */
+  --bg-page:var(--stone-25);
+  --bg-sunken:var(--stone-50);
+  --bg-muted:var(--stone-100);
+  --surface-card:var(--stone-0);
+  --surface-raised:var(--stone-0);
+  --surface-brand:var(--teal-500);
+  --surface-brand-soft:var(--teal-50);
+  --surface-ink:var(--navy-800);
+  --surface-accent-soft:var(--ochre-50);
+  --surface-header:rgba(251,250,248,.86);
+
+  --text-strong:var(--ink-900);
+  --text-body:var(--ink-700);
+  --text-muted:var(--ink-500);
+  --text-subtle:var(--ink-400);
+  --text-on-dark:#ffffff;
+  --text-on-dark-muted:rgba(255,255,255,.82);
+  --text-link:var(--teal-700);
+  --text-link-hover:var(--navy-700);
+  --text-accent:var(--ochre-700);
+  --text-brand:var(--teal-700);
+
+  --border-subtle:var(--stone-100);
+  --border-default:var(--stone-200);
+  --border-strong:var(--stone-300);
+  --border-focus:var(--teal-500);
+
+  --action-primary:var(--navy-700);
+  --action-primary-hover:var(--navy-800);
+  --action-primary-active:var(--navy-900);
+  --action-secondary:var(--teal-500);
+  --action-secondary-hover:var(--teal-600);
+  --action-accent:var(--ochre-500);
+
+  --icon-default:var(--ink-700);
+  --icon-brand:var(--teal-700);
+  --icon-accent:var(--ochre-600);
+
+  --status-info:var(--teal-700);--status-info-bg:var(--teal-50);
+  --status-success:var(--green-700);--status-success-bg:var(--green-50);
+  --status-warning:var(--ochre-700);--status-warning-bg:var(--ochre-50);
+  --status-danger:var(--red-600);--status-danger-bg:var(--red-50);
+
+  --overlay-scrim:rgba(10,36,67,.55);
+  --overlay-hero:linear-gradient(180deg,rgba(10,36,67,.15) 0%,rgba(10,36,67,.35) 45%,rgba(10,36,67,.72) 100%); /* @kind color */
+  --overlay-logo-hero:rgba(52,78,96,.72);
+}

@@ -1,0 +1,51 @@
+/* Spacing, layout, radii, elevation, motion */
+:root{
+  --space-0:0;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;
+  --space-24:96px;
+  --space-32:128px;
+
+  --container-max:1200px; /* @kind spacing */
+  --container-narrow:760px; /* @kind spacing */
+  --container-pad:clamp(16px,4vw,32px); /* @kind spacing */
+  --header-height:72px; /* @kind spacing */
+  --section-gap:clamp(56px,8vw,96px); /* @kind spacing */
+
+  --radius-xs:4px;
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --radius-pill:999px;
+  --radius-round:50%;
+
+  --border-width:1px; /* @kind spacing */
+  --border-width-strong:2px; /* @kind spacing */
+
+  --shadow-xs:0 1px 2px rgba(20,35,58,.06);
+  --shadow-sm:0 1px 3px rgba(20,35,58,.08),0 1px 2px rgba(20,35,58,.04);
+  --shadow-md:0 6px 16px -4px rgba(20,35,58,.12),0 2px 4px rgba(20,35,58,.05);
+  --shadow-lg:0 22px 48px -16px rgba(20,35,58,.28),0 4px 10px rgba(20,35,58,.06);
+  --shadow-focus:0 0 0 3px rgba(59,168,187,.35);
+
+  --ease-out:cubic-bezier(.2,.7,.2,1); /* @kind other */
+  --ease-in-out:cubic-bezier(.45,0,.25,1); /* @kind other */
+  --dur-fast:140ms; /* @kind other */
+  --dur-base:220ms; /* @kind other */
+  --dur-slow:420ms; /* @kind other */
+
+  --z-header:50; /* @kind other */
+  --z-dropdown:60; /* @kind other */
+  --z-overlay:90; /* @kind other */
+  --z-dialog:100; /* @kind other */
+}

@@ -1,76 +1,183 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
+import NewsCard from "../../components/NewsCard.astro";
+import Pager from "../../components/Pager.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import Tabs from "../../components/ui/Tabs.astro";
 import { sanityClient } from "sanity:client";
-import { urlFor } from "../../sanity/lib/image";
-import { toPlainText } from "../../sanity/lib/portableText";
-import { badgeLabel } from "../../sanity/lib/badges";
+import { PARROCO_BADGE, POST_CARD_FIELDS, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
 
-interface Post {
-	_id: string;
-	title: string;
-	slug: string;
-	images?: any[];
-	body: any[];
-	publishedAt: string;
-	badge?: string;
-}
+// Pagina generata a ogni richiesta: filtro e pagina arrivano dall'indirizzo (?tag=…&pagina=…&per=…)
+export const prerender = false;
 
-const posts = await sanityClient.fetch<Post[]>(
-	`*[_type == "post" && defined(slug.current)] | order(coalesce(publishedAt, _createdAt) desc){
-		_id, title, "slug": slug.current, images, body, badge,
-		"publishedAt": coalesce(publishedAt, _createdAt)
-	}`
+Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+
+const PER_PAGE_OPTIONS = [5, 10, 20];
+const params = Astro.url.searchParams;
+const filter = params.get("tag") || "tutte";
+const perParam = Number(params.get("per"));
+const perPage = PER_PAGE_OPTIONS.includes(perParam) ? perParam : PER_PAGE_OPTIONS[0];
+const requestedPage = Math.max(1, Math.floor(Number(params.get("pagina")) || 1));
+
+// Solo i tag usati da almeno una notizia
+const tags = await sanityClient.fetch<Tag[]>(
+	`*[_type == "tag" && defined(slug.current) && count(*[_type == "post" && references(^._id)]) > 0] | order(name asc){ ${TAG_FIELDS} }`,
 );
 
-const dateFormatter = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" });
+const filterQuery =
+	filter === "tutte" ? "" : filter === "parroco" ? "&& badge == $badge" : "&& $tagSlug in tags[]->slug.current";
+const queryParams = { badge: PARROCO_BADGE, tagSlug: filter };
+
+const total = await sanityClient.fetch<number>(
+	`count(*[_type == "post" && defined(slug.current) ${filterQuery}])`,
+	queryParams,
+);
+const pages = Math.max(1, Math.ceil(total / perPage));
+const page = Math.min(requestedPage, pages);
+const start = (page - 1) * perPage;
+
+const posts = await sanityClient.fetch<PostCard[]>(
+	`*[_type == "post" && defined(slug.current) ${filterQuery}]
+		| order(coalesce(publishedAt, _createdAt) desc)[$start...$end]{ ${POST_CARD_FIELDS} }`,
+	{ ...queryParams, start, end: start + perPage },
+);
+
+function hrefFor({ tag = filter, per = perPage, pagina = 1 }: { tag?: string; per?: number; pagina?: number }) {
+	const search = new URLSearchParams();
+	if (tag !== "tutte") search.set("tag", tag);
+	if (per !== PER_PAGE_OPTIONS[0]) search.set("per", String(per));
+	if (pagina > 1) search.set("pagina", String(pagina));
+	const qs = search.toString();
+	return qs ? `/notizie?${qs}` : "/notizie";
+}
+
+const filterItems = [
+	{ value: "tutte", label: "Tutte" },
+	{ value: "parroco", label: "Dal parroco" },
+	...tags.map((t) => ({ value: t.slug, label: t.name })),
+].map((item) => ({ label: item.label, href: hrefFor({ tag: item.value }), active: item.value === filter }));
+
+const countLabel =
+	total === 0 ? "Nessuna notizia con questa etichetta." : total === 1 ? "1 notizia" : `${total} notizie`;
 ---
 
 <Layout
 	title="Avvisi e notizie"
 	description="Le comunicazioni, le notizie e i racconti della Parrocchia Santa Maria Addolorata."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Avvisi e notizie</h1>
-		<p class="text-base-content/70 mb-10">Le comunicazioni, le notizie e i racconti della vita della parrocchia.</p>
+	<Container class="notizie">
+		<SectionHeading
+			as="h1"
+			size="lg"
+			title="Avvisi e notizie"
+			description="Le comunicazioni, le notizie e i racconti della vita della parrocchia."
+		/>
+		<div class="tabs-scroll">
+			<Tabs variant="underline" label="Filtra per etichetta" items={filterItems} />
+		</div>
 
-		{
-			posts.length === 0 ? (
-				<p class="text-base-content/60">Non ci sono ancora avvisi pubblicati.</p>
-			) : (
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-					{posts.map((post) => (
-						<a
-							href={`/notizie/${post.slug}`}
-							class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
-						>
-							{post.images?.[0] && (
-								<figure class="aspect-video">
-									<img
-										src={urlFor(post.images[0]).width(600).height(340).auto("format").url()}
-										width="600"
-										height="340"
-										alt={post.images[0].alt || post.title}
-										class="w-full h-full object-cover"
-										loading="lazy"
-										decoding="async"
-									/>
-								</figure>
-							)}
-							<div class="card-body">
-								<span class="text-xs text-base-content/60">
-									{dateFormatter.format(new Date(post.publishedAt))}
-								</span>
-								{badgeLabel(post.badge) && (
-									<span class="badge badge-primary badge-outline badge-sm">{badgeLabel(post.badge)}</span>
-								)}
-								<h2 class="card-title">{post.title}</h2>
-								<p class="text-base-content/70">{toPlainText(post.body)}</p>
-							</div>
-						</a>
-					))}
+		<div class="notizie__list">
+			<div class="notizie__toolbar">
+				<span class="notizie__count">{countLabel}</span>
+				<div class="notizie__per">
+					<span>Per pagina</span>
+					<div role="group" aria-label="Notizie per pagina" class="per-page">
+						{
+							PER_PAGE_OPTIONS.map((n) => (
+								<a
+									href={hrefFor({ per: n })}
+									class:list={["per-page__opt", { "is-on": n === perPage }]}
+									aria-current={n === perPage ? "true" : undefined}
+								>
+									{n}
+								</a>
+							))
+						}
+					</div>
 				</div>
-			)
-		}
+			</div>
+
+			{pages > 1 && <Pager page={page} pages={pages} position="top" hrefFor={(n) => hrefFor({ pagina: n })} />}
+
+			{posts.map((post) => <NewsCard post={post} layout="responsive" />)}
+
+			{pages > 1 && <Pager page={page} pages={pages} position="bottom" hrefFor={(n) => hrefFor({ pagina: n })} />}
+		</div>
 	</Container>
 </Layout>
+
+<style>
+	:global(.notizie) {
+		padding-top: 48px;
+	}
+	.tabs-scroll {
+		margin: 28px calc(-1 * var(--container-pad)) 0;
+		padding: 0 var(--container-pad);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	@media (max-width: 639px) {
+		.tabs-scroll :global(.tabs-ds) {
+			flex-wrap: nowrap;
+			max-width: none;
+			min-width: 100%;
+		}
+	}
+	.notizie__list {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-top: 20px;
+		max-width: 920px;
+	}
+	.notizie__toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px 20px;
+		flex-wrap: wrap;
+	}
+	.notizie__count,
+	.notizie__per span {
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+	.notizie__per {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.per-page {
+		display: flex;
+		padding: 3px;
+		gap: 2px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+	}
+	.per-page__opt {
+		min-width: 40px;
+		height: 32px;
+		padding: 0 10px;
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-pill);
+		font-size: 14px;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-strong);
+		text-decoration: none;
+	}
+	.per-page__opt:hover {
+		background: var(--bg-muted);
+		color: var(--text-strong);
+	}
+	.per-page__opt.is-on {
+		background: var(--navy-700);
+		color: var(--text-on-dark);
+	}
+</style>

@@ -1,96 +1,166 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
+import EventListItem from "../../components/EventListItem.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import Tabs from "../../components/ui/Tabs.astro";
 import { sanityClient } from "sanity:client";
-import { urlFor } from "../../sanity/lib/image";
-import { truncate } from "../../sanity/lib/text";
-import { formatEventDate, todayInRome } from "../../sanity/lib/eventDate";
+import { groupByMonth, todayInRome } from "../../sanity/lib/eventDate";
+import { EVENT_CARD_FIELDS, type EventCard, type Tag } from "../../sanity/lib/queries";
 
-// Pagina generata a ogni richiesta, per separare i prossimi eventi da quelli passati in base a oggi
+// Pagina generata a ogni richiesta, per separare i prossimi eventi da quelli passati in base a oggi.
+// Vista e filtro arrivano dall'indirizzo: ?vista=passati&tag=…
 export const prerender = false;
 
 Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
 Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
 
-interface Event {
-	_id: string;
-	title: string;
-	slug: string;
-	description: string;
-	image?: any;
-	eventDate: string;
-	startTime?: string;
-	endDate?: string;
-	endTime?: string;
-}
+const params = Astro.url.searchParams;
+const past = params.get("vista") === "passati";
+const filter = params.get("tag") || "tutti";
 
-const { upcoming, past } = await sanityClient.fetch<{ upcoming: Event[]; past: Event[] }>(
-	`{
-		"upcoming": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
-			| order(eventDate asc, startTime asc){
-			_id, title, "slug": slug.current, description, image, eventDate, startTime, endDate, endTime
-		},
-		"past": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) < $today]
-			| order(eventDate desc, startTime desc){
-			_id, title, "slug": slug.current, description, image, eventDate, startTime, endDate, endTime
-		}
-	}`,
-	{ today: todayInRome() }
+const events = await sanityClient.fetch<EventCard[]>(
+	past
+		? `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) < $today]
+			| order(eventDate desc, startTime desc){ ${EVENT_CARD_FIELDS} }`
+		: `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
+			| order(eventDate asc, startTime asc){ ${EVENT_CARD_FIELDS} }`,
+	{ today: todayInRome() },
 );
 
-const sections = [
-	{ title: "Prossimi appuntamenti", events: upcoming, empty: "Al momento non ci sono appuntamenti in programma." },
-	{ title: "Eventi passati", events: past, empty: "" },
+// Le schede dei filtri mostrano solo i tag presenti negli eventi di questa vista
+const tagMap = new Map<string, Tag>();
+for (const event of events) for (const tag of event.tags ?? []) if (tag.slug) tagMap.set(tag.slug, tag);
+const tags = [...tagMap.values()].sort((a, b) => a.name.localeCompare(b.name, "it"));
+
+const visible = filter === "tutti" ? events : events.filter((e) => e.tags?.some((t) => t.slug === filter));
+const months = groupByMonth(visible, (e) => e.eventDate);
+
+function hrefFor({ vista = past ? "passati" : "prossimi", tag = filter }: { vista?: string; tag?: string }) {
+	const search = new URLSearchParams();
+	if (vista === "passati") search.set("vista", "passati");
+	if (tag !== "tutti") search.set("tag", tag);
+	const qs = search.toString();
+	return qs ? `/eventi?${qs}` : "/eventi";
+}
+
+const viewTabs = [
+	{ label: "Prossimi", href: hrefFor({ vista: "prossimi" }), active: !past },
+	{ label: "Già svolti", href: hrefFor({ vista: "passati" }), active: past },
 ];
+const filterTabs = [{ slug: "tutti", name: "Tutti" }, ...tags].map((t) => ({
+	label: t.name,
+	href: hrefFor({ tag: t.slug }),
+	active: t.slug === filter,
+}));
+
+const emptyText =
+	filter === "tutti"
+		? past
+			? "Non ci sono appuntamenti passati."
+			: "Al momento non ci sono appuntamenti in programma."
+		: past
+			? "Nessun appuntamento passato con questa etichetta."
+			: "Nessun appuntamento in programma con questa etichetta.";
 ---
 
 <Layout
 	title="Calendario"
 	description="Gli appuntamenti, le celebrazioni e le iniziative della Parrocchia Santa Maria Addolorata."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Calendario</h1>
-		<p class="text-base-content/70 mb-10">
-			Gli appuntamenti, le celebrazioni e le iniziative della parrocchia.
-		</p>
-
+	<Container class="calendario">
+		<div class="calendario__head">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="Calendario"
+				description="Gli appuntamenti della comunità: celebrazioni, incontri, feste."
+			/>
+			<Tabs label="Periodo" items={viewTabs} />
+		</div>
 		{
-			sections.map((section) =>
-				section.events.length === 0 ? (
-					section.empty && <p class="text-base-content/60 mb-12">{section.empty}</p>
-				) : (
-					<section class="mb-12">
-						<h2 class="text-xl font-bold mb-6">{section.title}</h2>
-						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-							{section.events.map((event) => (
-								<a
-									href={`/eventi/${event.slug}`}
-									class="card bg-base-200 hover:shadow-lg transition-shadow overflow-hidden"
-								>
-									{event.image && (
-										<figure class="aspect-video">
-											<img
-												src={urlFor(event.image).width(600).height(340).auto("format").url()}
-												width="600"
-												height="340"
-												alt={event.image.alt || event.title}
-												class="w-full h-full object-cover"
-												loading="lazy"
-												decoding="async"
-											/>
-										</figure>
-									)}
-									<div class="card-body">
-										<span class="text-xs text-base-content/60">{formatEventDate(event)}</span>
-										<h3 class="card-title">{event.title}</h3>
-										<p class="text-base-content/70">{truncate(event.description)}</p>
-									</div>
-								</a>
-							))}
-						</div>
-					</section>
-				)
+			filterTabs.length > 1 && (
+				<div class="tabs-scroll">
+					<Tabs variant="underline" label="Filtra per etichetta" items={filterTabs} />
+				</div>
 			)
 		}
+
+		<div class="calendario__months">
+			{months.length === 0 && <p class="calendario__empty">{emptyText}</p>}
+			{
+				months.map((month) => (
+					<section class="calendario__month">
+						<div class="calendario__month-head">
+							<h2>{month.label}</h2>
+							<span>{month.items.length === 1 ? "1 appuntamento" : `${month.items.length} appuntamenti`}</span>
+						</div>
+						{month.items.map((event) => (
+							<EventListItem event={event} />
+						))}
+					</section>
+				))
+			}
+		</div>
 	</Container>
 </Layout>
+
+<style>
+	:global(.calendario) {
+		padding-top: 48px;
+	}
+	.calendario__head {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 24px;
+		flex-wrap: wrap;
+	}
+	.tabs-scroll {
+		margin: 28px calc(-1 * var(--container-pad)) 0;
+		padding: 0 var(--container-pad);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	@media (max-width: 639px) {
+		.tabs-scroll :global(.tabs-ds) {
+			flex-wrap: nowrap;
+			max-width: none;
+			min-width: 100%;
+		}
+	}
+	.calendario__months {
+		max-width: 880px;
+		display: flex;
+		flex-direction: column;
+		gap: 44px;
+		margin-top: 36px;
+	}
+	.calendario__empty {
+		margin: 0;
+		font-size: 16px;
+		color: var(--text-muted);
+	}
+	.calendario__month {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.calendario__month-head {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		padding-bottom: 10px;
+		border-bottom: 1px solid var(--border-default);
+		margin-bottom: 6px;
+	}
+	.calendario__month-head h2 {
+		margin: 0;
+		font: var(--type-h3);
+		color: var(--text-strong);
+	}
+	.calendario__month-head span {
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+</style>

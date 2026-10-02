@@ -1,0 +1,51 @@
+---
+interface Props {
+	href?: string;
+	padding?: number;
+	interactive?: boolean;
+	class?: string;
+	style?: string;
+}
+
+const { href, padding = 24, interactive = !!href, class: className, style } = Astro.props;
+const Tag = href ? "a" : "div";
+---
+
+<Tag
+	href={href}
+	class:list={["card-ds", { "card-ds--interactive": interactive }, className]}
+	style={`padding:${padding}px;${style ?? ""}`}
+>
+	<slot />
+</Tag>
+
+<style>
+	.card-ds {
+		display: block;
+		box-sizing: border-box;
+		border-radius: var(--radius-lg);
+		color: inherit;
+		text-decoration: none;
+		overflow: hidden;
+		background: var(--surface-card);
+		border: 1px solid var(--border-subtle);
+		box-shadow: var(--shadow-sm);
+		transition:
+			box-shadow var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
+	}
+	.card-ds--interactive {
+		cursor: pointer;
+	}
+	.card-ds--interactive:hover {
+		color: inherit;
+		box-shadow: var(--shadow-md);
+		transform: translateY(-2px);
+	}
+	.card-ds--interactive:hover :global(img) {
+		transform: scale(1.03);
+	}
+	.card-ds :global(img) {
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+</style>

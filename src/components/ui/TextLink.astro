@@ -1,0 +1,51 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+	href: string;
+	arrow?: "right" | "left" | "none";
+	tone?: "brand" | "onDark";
+	class?: string;
+}
+
+const { href, arrow = "right", tone = "brand", class: className } = Astro.props;
+---
+
+<a href={href} class:list={["text-link", `text-link--${tone}`, className]}>
+	{arrow === "left" && <span class="text-link__arrow text-link__arrow--left"><Icon name="arrow-left" size={16} /></span>}
+	<slot />
+	{arrow === "right" && <span class="text-link__arrow text-link__arrow--right"><Icon name="arrow-right" size={16} /></span>}
+</a>
+
+<style>
+	.text-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-family: var(--font-sans);
+		font-weight: 600;
+		font-size: 15px;
+		color: var(--text-link);
+		text-decoration: none;
+		text-underline-offset: 4px;
+		text-decoration-thickness: 1px;
+	}
+	.text-link:hover {
+		color: var(--text-link-hover);
+		text-decoration: underline;
+	}
+	.text-link--onDark,
+	.text-link--onDark:hover {
+		color: #fff;
+	}
+	.text-link__arrow {
+		display: flex;
+		transition: transform var(--dur-base) var(--ease-out);
+	}
+	.text-link:hover .text-link__arrow--right {
+		transform: translateX(3px);
+	}
+	.text-link:hover .text-link__arrow--left {
+		transform: translateX(-3px);
+	}
+</style>

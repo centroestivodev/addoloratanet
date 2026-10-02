@@ -1,69 +1,152 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
-import PhoneIcon from "../../assets/icons/phone.svg";
-import MailIcon from "../../assets/icons/mail.svg";
-import ClockIcon from "../../assets/icons/clock.svg";
-import { contact, parroco, socials } from "../../data/parish";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import Icon from "../../components/ui/Icon.astro";
+import IconButton from "../../components/ui/IconButton.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import type { IconName } from "../../components/ui/icons";
+import { contact, parroco, segreteria, socials } from "../../data/parish";
+
+const cards: { title: string; name?: string; rows: { icon: IconName; value: string; href?: string }[] }[] = [
+	{
+		title: "Segreteria parrocchiale",
+		rows: [
+			{ icon: "phone", value: contact.phone, href: contact.phoneHref },
+			{ icon: "mail", value: contact.email, href: `mailto:${contact.email}` },
+			{ icon: "clock", value: `${segreteria.days}, dalle 17:00 alle 19:00` },
+		],
+	},
+	{
+		title: "Parroco",
+		name: parroco.name,
+		rows: [{ icon: "mail", value: parroco.email, href: `mailto:${parroco.email}` }],
+	},
+];
+const followSocials = socials.filter((s) => s.icon !== "twitter");
 ---
 
 <Layout
 	title="Contatti"
 	description="Segreteria parrocchiale, parroco e canali social della Parrocchia Santa Maria Addolorata."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Contatti</h1>
-		<p class="text-base-content/70 mb-10">
-			Per informazioni, richieste di sacramenti o qualsiasi necessità, questi sono i nostri
-			riferimenti.
-		</p>
-
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">Segreteria parrocchiale</h2>
-					<ul class="flex flex-col gap-2 mt-2">
-						<li class="flex items-center gap-2">
-							<PhoneIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href={contact.phoneHref}>{contact.phone}</a>
-						</li>
-						<li class="flex items-center gap-2">
-							<MailIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href={`mailto:${contact.email}`}>{contact.email}</a>
-						</li>
-						<li class="flex items-center gap-2">
-							<ClockIcon class="h-5 w-5 text-primary shrink-0" />
-							<span>Da lunedì a sabato, 17:00 - 19:00</span>
-						</li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">Parroco</h2>
-					<p class="font-medium mt-2">{parroco.name}</p>
-					<ul class="flex flex-col gap-2 mt-2">
-						<li class="flex items-center gap-2">
-							<MailIcon class="h-5 w-5 text-primary shrink-0" />
-							<a class="link link-hover" href={`mailto:${parroco.email}`}>{parroco.email}</a>
-						</li>
-					</ul>
-				</div>
-			</div>
+	<Container class="page-top">
+		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info", href: "/info" }, { label: "Contatti" }]} />
+		<div class="heading">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="Contatti"
+				description="Per informazioni, richieste di sacramenti o qualsiasi necessità, questi sono i nostri riferimenti."
+			/>
 		</div>
-
-		<div>
-			<h2 class="text-xl font-semibold mb-4">Seguici sui social</h2>
-			<div class="flex flex-wrap gap-3">
-				{
-					socials.map((social) => (
-						<a class="btn btn-outline btn-primary" href={social.href} target="_blank" rel="noopener noreferrer">
-							{social.name}
-						</a>
-					))
-				}
+		<div class="cards">
+			{
+				cards.map((card) => (
+					<div class="panel contact-card">
+						<div class="contact-card__head">
+							<h2>{card.title}</h2>
+							{card.name && <span class="contact-card__name">{card.name}</span>}
+						</div>
+						<div class="contact-card__rows">
+							{card.rows.map((row) => {
+								const Tag = row.href ? "a" : "span";
+								return (
+									<Tag href={row.href} class:list={["contact-row", { "is-link": row.href }]}>
+										<span class="contact-row__icon">
+											<Icon name={row.icon} size={18} />
+										</span>
+										<span class="contact-row__value">{row.value}</span>
+									</Tag>
+								);
+							})}
+						</div>
+					</div>
+				))
+			}
+		</div>
+		<div class="follow">
+			<h2>Seguici sui social</h2>
+			<div class="follow__icons">
+				{followSocials.map((s) => <IconButton icon={s.icon} label={s.name} variant="brand" size="lg" href={s.href} external />)}
+				<IconButton icon="mail" label="Email" variant="brand" size="lg" href={`mailto:${contact.email}`} />
 			</div>
 		</div>
 	</Container>
 </Layout>
+
+<style>
+	.heading {
+		margin-top: 24px;
+	}
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+		gap: 20px;
+		margin-top: 32px;
+		align-items: stretch;
+	}
+	.contact-card {
+		padding: 28px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.contact-card__head {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	h2 {
+		margin: 0;
+		font: var(--type-h4);
+		color: var(--text-strong);
+	}
+	.contact-card__name {
+		font-family: var(--font-display);
+		font-weight: 500;
+		font-style: italic;
+		font-size: 20px;
+		color: var(--navy-700);
+	}
+	.contact-card__rows {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.contact-row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 8px 0;
+		text-decoration: none;
+		font-size: 16px;
+		font-weight: 500;
+		color: var(--text-body);
+	}
+	.contact-row.is-link {
+		color: var(--text-strong);
+	}
+	.contact-row.is-link:hover {
+		color: var(--navy-700);
+	}
+	.contact-row__icon {
+		color: var(--icon-brand);
+		display: flex;
+		flex: none;
+	}
+	.contact-row__value {
+		overflow-wrap: anywhere;
+	}
+	.follow {
+		margin-top: 48px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.follow__icons {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+</style>

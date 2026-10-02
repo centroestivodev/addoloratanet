@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {altField} from './imageAlt'
 
 // Orari a passi di 15 minuti, salvati come "HH:mm" (ora di Roma, senza fuso)
@@ -93,6 +93,15 @@ export default defineType({
       to: [{type: 'post'}],
       description:
         "Facoltativo. Per gli incontri di un percorso: il post che lo presenta. Nella pagina del post compariranno tutti gli incontri collegati.",
+    }),
+    defineField({
+      name: 'tags',
+      title: 'Tag',
+      type: 'array',
+      description:
+        "Facoltativi. Servono a filtrare il calendario. Se c'è un articolo collegato, l'evento eredita anche i suoi tag.",
+      of: [defineArrayMember({type: 'reference', to: [{type: 'tag'}]})],
+      validation: (Rule) => Rule.unique(),
     }),
   ],
   orderings: [

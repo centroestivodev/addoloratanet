@@ -1,0 +1,170 @@
+---
+import Icon from "./ui/Icon.astro";
+import Badge from "./ui/Badge.astro";
+import TagDot from "./ui/TagDot.astro";
+import { urlFor } from "../sanity/lib/image";
+import { toPlainText } from "../sanity/lib/portableText";
+import { formatDay, dayInRome } from "../sanity/lib/eventDate";
+import { PARROCO_BADGE, type PostCard } from "../sanity/lib/queries";
+
+interface Props {
+	post: PostCard;
+	// "responsive": orizzontale da 640px in su, verticale sotto
+	layout?: "vertical" | "responsive";
+	excerpt?: boolean;
+}
+
+const { post, layout = "vertical", excerpt = true } = Astro.props;
+const isParroco = post.badge === PARROCO_BADGE;
+const tag = post.tags?.[0];
+const text = excerpt ? toPlainText(post.body, 180) : "";
+---
+
+<a href={`/notizie/${post.slug}`} class:list={["news-card", `news-card--${layout}`]}>
+	<div class="news-card__media">
+		{
+			post.cover?.asset ? (
+				<img
+					src={urlFor(post.cover).width(800).height(500).auto("format").url()}
+					width="800"
+					height="500"
+					alt=""
+					loading="lazy"
+					decoding="async"
+				/>
+			) : (
+				<span class="news-card__placeholder">
+					<Icon name="newspaper" size={36} strokeWidth={1.5} />
+				</span>
+			)
+		}
+	</div>
+	<div class="news-card__body">
+		<div class="news-card__meta">
+			{
+				isParroco ? (
+					<Badge tone="navy">Comunicazione del parroco</Badge>
+				) : (
+					tag && (
+						<Badge>
+							<TagDot name={tag.name} color={tag.color} />
+						</Badge>
+					)
+				)
+			}
+			<span class="news-card__date">{formatDay(dayInRome(post.publishedAt))}</span>
+		</div>
+		<h3 class="news-card__title">{post.title}</h3>
+		{text && <p class="news-card__excerpt">{text}</p>}
+	</div>
+</a>
+
+<style>
+	.news-card {
+		display: flex;
+		flex-direction: column;
+		background: var(--surface-card);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-sm);
+		overflow: hidden;
+		text-decoration: none;
+		color: inherit;
+		transition: box-shadow var(--dur-base) var(--ease-out);
+		box-sizing: border-box;
+		font-family: var(--font-sans);
+	}
+	.news-card:hover {
+		box-shadow: var(--shadow-md);
+		color: inherit;
+	}
+	.news-card__media {
+		position: relative;
+		flex-shrink: 0;
+		width: 100%;
+		aspect-ratio: 16 / 10;
+		background: var(--bg-muted);
+		overflow: hidden;
+	}
+	.news-card__media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+	.news-card:hover .news-card__media img {
+		transform: scale(1.03);
+	}
+	.news-card__placeholder {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--stone-400);
+	}
+	.news-card__body {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 18px 20px 22px;
+		min-width: 0;
+		flex: 1;
+	}
+	.news-card__meta {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+	.news-card__date {
+		font-size: 13px;
+		color: var(--text-muted);
+		font-weight: 500;
+	}
+	.news-card__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 21px;
+		line-height: 1.25;
+		letter-spacing: -0.01em;
+		color: var(--text-strong);
+		text-wrap: balance;
+		transition: color var(--dur-fast) var(--ease-out);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.news-card:hover .news-card__title {
+		color: var(--navy-700);
+	}
+	.news-card__excerpt {
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.55;
+		color: var(--text-muted);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	@media (min-width: 640px) {
+		.news-card--responsive {
+			flex-direction: row;
+			gap: 20px;
+			padding: 16px;
+			align-items: center;
+		}
+		.news-card--responsive .news-card__media {
+			width: 38%;
+			aspect-ratio: 4 / 3;
+			border-radius: var(--radius-md);
+		}
+		.news-card--responsive .news-card__body {
+			padding: 0;
+		}
+	}
+</style>

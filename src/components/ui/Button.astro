@@ -1,0 +1,110 @@
+---
+import Icon from "./Icon.astro";
+import type { IconName } from "./icons";
+
+interface Props {
+	variant?: "primary" | "outline";
+	href?: string;
+	iconLeft?: IconName;
+	iconRight?: IconName;
+	fullWidth?: boolean;
+	disabled?: boolean;
+	external?: boolean;
+	class?: string;
+	[key: string]: any;
+}
+
+const {
+	variant = "primary",
+	href,
+	iconLeft,
+	iconRight,
+	fullWidth = false,
+	disabled = false,
+	external = false,
+	class: className,
+	...rest
+} = Astro.props;
+
+const classes = ["btn-ds", `btn-ds--${variant}`, { "btn-ds--full": fullWidth }, className];
+---
+
+{
+	href && !disabled ? (
+		<a
+			href={href}
+			class:list={classes}
+			target={external ? "_blank" : undefined}
+			rel={external ? "noopener noreferrer" : undefined}
+			{...rest}
+		>
+			{iconLeft && <Icon name={iconLeft} size={18} />}
+			<slot />
+			{iconRight && <Icon name={iconRight} size={18} />}
+		</a>
+	) : (
+		<button type="button" class:list={classes} disabled={disabled} aria-disabled={disabled || undefined} {...rest}>
+			{iconLeft && <Icon name={iconLeft} size={18} />}
+			<slot />
+			{iconRight && <Icon name={iconRight} size={18} />}
+		</button>
+	)
+}
+
+<style>
+	.btn-ds {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		height: 44px;
+		padding: 0 20px;
+		box-sizing: border-box;
+		font-family: var(--font-sans);
+		font-weight: 600;
+		font-size: 15px;
+		letter-spacing: 0.01em;
+		line-height: 1;
+		border-radius: var(--radius-pill);
+		border: 1px solid transparent;
+		text-decoration: none;
+		white-space: nowrap;
+		cursor: pointer;
+		transition:
+			background var(--dur-fast) var(--ease-out),
+			border-color var(--dur-fast) var(--ease-out),
+			transform var(--dur-fast) var(--ease-out);
+	}
+	.btn-ds--full {
+		display: flex;
+		width: 100%;
+	}
+	.btn-ds:active:not(:disabled) {
+		transform: translateY(1px);
+	}
+	.btn-ds:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+	.btn-ds--primary {
+		background: var(--action-primary);
+		color: #fff;
+	}
+	.btn-ds--primary:hover:not(:disabled) {
+		background: var(--action-primary-hover);
+		color: #fff;
+	}
+	.btn-ds--primary:active:not(:disabled) {
+		background: var(--action-primary-active);
+	}
+	.btn-ds--outline {
+		background: transparent;
+		color: var(--navy-700);
+		border-color: var(--border-strong);
+	}
+	.btn-ds--outline:hover:not(:disabled) {
+		background: var(--navy-50);
+		border-color: var(--navy-700);
+		color: var(--navy-700);
+	}
+</style>

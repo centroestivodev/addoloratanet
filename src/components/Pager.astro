@@ -1,0 +1,98 @@
+---
+import Button from "./ui/Button.astro";
+import IconButton from "./ui/IconButton.astro";
+
+interface Props {
+	page: number;
+	pages: number;
+	hrefFor: (page: number) => string;
+	position: "top" | "bottom";
+}
+
+const { page, pages, hrefFor, position } = Astro.props;
+const prev = page > 1 ? hrefFor(page - 1) : undefined;
+const next = page < pages ? hrefFor(page + 1) : undefined;
+const numbers = Array.from({ length: pages }, (_, i) => i + 1);
+---
+
+<nav aria-label="Pagine" class:list={["pager", `pager--${position}`]}>
+	<Button variant="outline" iconLeft="arrow-left" href={prev} disabled={!prev} class="only-desk">Più recenti</Button>
+	<IconButton variant="outline" icon="arrow-left" label="Più recenti" href={prev} disabled={!prev} class="only-mob" />
+	<div class="pager__numbers">
+		{
+			numbers.map((n) =>
+				n === page ? (
+					<span class="pager__num is-current" aria-current="page">{n}</span>
+				) : (
+					<a class="pager__num" href={hrefFor(n)}>{n}</a>
+				),
+			)
+		}
+	</div>
+	<Button variant="outline" iconRight="arrow-right" href={next} disabled={!next} class="only-desk">Meno recenti</Button>
+	<IconButton variant="outline" icon="arrow-right" label="Meno recenti" href={next} disabled={!next} class="only-mob" />
+</nav>
+
+<style>
+	.pager {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+	.pager--top {
+		padding-bottom: 20px;
+		margin-bottom: 8px;
+		border-bottom: 1px solid var(--border-default);
+	}
+	.pager--bottom {
+		margin-top: 24px;
+		padding-top: 24px;
+		border-top: 1px solid var(--border-default);
+	}
+	.pager__numbers {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	.pager__num {
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		font-family: var(--font-sans);
+		font-size: 15px;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		border: 1px solid var(--border-default);
+		background: var(--surface-card);
+		color: var(--text-strong);
+		text-decoration: none;
+	}
+	a.pager__num:hover {
+		background: var(--navy-50);
+		color: var(--navy-700);
+	}
+	.pager__num.is-current {
+		background: var(--navy-700);
+		border-color: var(--navy-700);
+		color: var(--text-on-dark);
+	}
+	@media (max-width: 639px) {
+		.pager--top {
+			display: none;
+		}
+		.pager--bottom {
+			justify-content: center;
+			gap: 8px;
+			margin-top: 16px;
+			padding-top: 20px;
+		}
+	}
+</style>

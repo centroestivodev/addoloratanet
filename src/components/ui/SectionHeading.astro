@@ -1,0 +1,109 @@
+---
+interface Props {
+	title: string;
+	eyebrow?: string;
+	accent?: string;
+	description?: string;
+	align?: "left" | "center";
+	ornament?: boolean;
+	size?: "sm" | "md" | "lg" | "xl";
+	onDark?: boolean;
+	as?: "h1" | "h2";
+	class?: string;
+}
+
+const {
+	title,
+	eyebrow,
+	accent,
+	description,
+	align = "left",
+	ornament = false,
+	size = "md",
+	onDark = false,
+	as: H = "h2",
+	class: className,
+} = Astro.props;
+---
+
+<div class:list={["section-heading", `section-heading--${align}`, `section-heading--${size}`, { "section-heading--dark": onDark }, className]}>
+	{eyebrow && <span class="section-heading__eyebrow">{eyebrow}</span>}
+	<H class="section-heading__title">
+		{ornament && <span class="section-heading__dot" aria-hidden="true">·</span>}{title}{
+			accent && (
+				<>
+					{" "}
+					<em>{accent}</em>
+				</>
+			)
+		}{ornament && <span class="section-heading__dot" aria-hidden="true">·</span>}
+	</H>
+	{description && <p class="section-heading__description">{description}</p>}
+</div>
+
+<style>
+	.section-heading {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		align-items: flex-start;
+		max-width: 760px;
+	}
+	.section-heading--center {
+		align-items: center;
+		text-align: center;
+		margin: 0 auto;
+	}
+	.section-heading__eyebrow {
+		font: var(--type-eyebrow);
+		letter-spacing: var(--ls-eyebrow);
+		text-transform: uppercase;
+		color: var(--text-brand);
+	}
+	.section-heading__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: var(--fs-h2);
+		line-height: 1.1;
+		letter-spacing: -0.015em;
+		color: var(--text-strong);
+		text-wrap: balance;
+	}
+	.section-heading--sm .section-heading__title {
+		font-size: var(--fs-h3);
+	}
+	.section-heading--lg .section-heading__title {
+		font-size: var(--fs-h1);
+	}
+	.section-heading--xl .section-heading__title {
+		font-size: var(--fs-display);
+	}
+	.section-heading__title em {
+		font-style: italic;
+		font-weight: 500;
+	}
+	.section-heading__dot {
+		color: var(--ochre-500);
+		font-weight: 400;
+		margin: 0 0.35em;
+	}
+	.section-heading__description {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--fs-lead);
+		line-height: 1.55;
+		color: var(--text-muted);
+		text-wrap: pretty;
+	}
+	.section-heading--dark .section-heading__eyebrow,
+	.section-heading--dark .section-heading__description {
+		color: var(--text-on-dark-muted);
+	}
+	.section-heading--dark .section-heading__title {
+		color: #fff;
+	}
+	.section-heading--dark .section-heading__dot {
+		color: var(--ochre-300);
+	}
+</style>

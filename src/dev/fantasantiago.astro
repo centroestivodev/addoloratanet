@@ -1,12 +1,15 @@
 ---
+// Pagina visibile solo in sviluppo: per rimetterla online vedi il commento
+// su `fantasantiagoSoloInDev` in astro.config.mjs.
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
 import Classifica from "../components/Classifica.vue";
+import SectionHeading from "../components/ui/SectionHeading.astro";
 ---
 
 <Layout title="FantaSantiago" description="Classifica del FantaSantiago." noindex>
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">FantaSantiago</h1>
+	<Container class="page-top">
+		<SectionHeading as="h1" size="lg" title="FantaSantiago" class="mb-6" />
 		<Classifica client:load />
 	</Container>
 </Layout>
