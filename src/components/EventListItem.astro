@@ -1,0 +1,155 @@
+---
+// Appuntamento come voce di calendario: compatto su mobile, con miniatura da 640px in su
+import Icon from "./ui/Icon.astro";
+import DateBadge from "./ui/DateBadge.astro";
+import { urlFor } from "../sanity/lib/image";
+import { formatCardTime } from "../sanity/lib/eventDate";
+import type { EventCard } from "../sanity/lib/queries";
+
+interface Props {
+	event: EventCard;
+}
+
+const { event } = Astro.props;
+const time = formatCardTime(event);
+const dims = event.imageDimensions;
+// Le locandine verticali si mostrano intere, le foto si ritagliano
+const isPoster = dims ? dims.height / dims.width > 1.3 : false;
+const thumb = event.image?.asset
+	? isPoster
+		? urlFor(event.image).width(240).auto("format").url()
+		: urlFor(event.image).width(240).height(320).auto("format").url()
+	: undefined;
+---
+
+<a href={`/eventi/${event.slug}`} class="event-item">
+	<DateBadge date={event.eventDate} size="sm" class="only-mob" />
+	<DateBadge date={event.eventDate} showWeekday class="only-desk" />
+	<div class="event-item__body">
+		<h3 class="event-item__title">{event.title}</h3>
+		{
+			time && (
+				<span class="event-item__time">
+					<span class="only-desk">
+						<Icon name="clock" size={15} color="var(--icon-brand)" />
+					</span>
+					{time}
+				</span>
+			)
+		}
+		{event.description && <p class="event-item__desc">{event.description}</p>}
+	</div>
+	{
+		thumb && (
+			<div class="event-item__thumb only-desk">
+				<img
+					src={thumb}
+					alt={event.image.alt || ""}
+					loading="lazy"
+					decoding="async"
+					style={{ objectFit: isPoster ? "contain" : "cover" }}
+				/>
+			</div>
+		)
+	}
+</a>
+
+<style>
+	.event-item {
+		display: flex;
+		gap: 14px;
+		align-items: flex-start;
+		padding: 14px;
+		box-sizing: border-box;
+		border-radius: var(--radius-lg);
+		background: var(--surface-card);
+		border: 1px solid var(--border-subtle);
+		box-shadow: var(--shadow-sm);
+		color: inherit;
+		text-decoration: none;
+		overflow: hidden;
+		transition:
+			box-shadow var(--dur-base) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
+	}
+	.event-item:hover {
+		color: inherit;
+		box-shadow: var(--shadow-md);
+		transform: translateY(-2px);
+	}
+	.event-item__body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.event-item__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 17px;
+		line-height: 1.25;
+		letter-spacing: -0.01em;
+		color: var(--text-strong);
+		text-wrap: pretty;
+	}
+	.event-item__time {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		color: var(--text-muted);
+	}
+	.event-item__desc {
+		margin: 2px 0 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--text-body);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.event-item__thumb {
+		flex: none;
+		width: clamp(76px, 14vw, 120px);
+		aspect-ratio: 3 / 4;
+		border-radius: var(--radius-md);
+		overflow: hidden;
+		background: var(--bg-muted);
+	}
+	.event-item__thumb img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+	.event-item:hover .event-item__thumb img {
+		transform: scale(1.03);
+	}
+	@media (min-width: 640px) {
+		.event-item {
+			gap: 18px;
+			padding: 18px;
+		}
+		.event-item__body {
+			gap: 8px;
+			padding-top: 2px;
+		}
+		.event-item__title {
+			font-size: 20px;
+			line-height: 1.22;
+			text-wrap: balance;
+		}
+		.event-item__time {
+			font-size: 14px;
+		}
+		.event-item__desc {
+			margin: 0;
+			font-size: 15px;
+			line-height: 1.55;
+			-webkit-line-clamp: 3;
+		}
+	}
+</style>

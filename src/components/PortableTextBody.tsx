@@ -9,27 +9,25 @@ function youtubeId(url?: string): string | undefined {
 
 const components: PortableTextComponents = {
 	block: {
-		h2: ({ children }) => <h2 className="text-2xl font-bold mt-8 mb-3">{children}</h2>,
-		h3: ({ children }) => <h3 className="text-xl font-bold mt-6 mb-2">{children}</h3>,
-		normal: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+		h2: ({ children }) => <h2 className="pt-h2">{children}</h2>,
+		h3: ({ children }) => <h3 className="pt-h3">{children}</h3>,
+		normal: ({ children }) => <p className="pt-p">{children}</p>,
 		blockquote: ({ children }) => (
-			<blockquote className="border-l-4 border-primary pl-4 italic my-4 text-base-content/80">{children}</blockquote>
+			<blockquote className="pt-quote">
+				<span aria-hidden="true" className="pt-quote__mark">“</span>
+				<p>{children}</p>
+			</blockquote>
 		),
 	},
 	list: {
-		bullet: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
-		number: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
+		bullet: ({ children }) => <ul className="pt-list">{children}</ul>,
+		number: ({ children }) => <ol className="pt-list">{children}</ol>,
 	},
 	marks: {
-		strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-		em: ({ children }) => <em className="italic">{children}</em>,
+		strong: ({ children }) => <strong className="pt-strong">{children}</strong>,
+		em: ({ children }) => <em>{children}</em>,
 		link: ({ value, children }) => (
-			<a
-				href={value?.href}
-				className="link link-primary"
-				target="_blank"
-				rel="noopener noreferrer"
-			>
+			<a href={value?.href} target="_blank" rel="noopener noreferrer">
 				{children}
 			</a>
 		),
@@ -37,20 +35,21 @@ const components: PortableTextComponents = {
 	types: {
 		image: ({ value }) => (
 			<img
-				src={urlFor(value).width(1200).auto('format').url()}
+				src={urlFor(value).width(1440).height(960).auto('format').url()}
 				alt={value.alt ?? ''}
-				className="rounded-box my-6"
+				className="pt-image"
+				loading="lazy"
+				decoding="async"
 			/>
 		),
 		youtube: ({ value }) => {
 			const id = youtubeId(value?.url);
 			if (!id) return null;
 			return (
-				<div className="aspect-video my-6">
+				<div className="pt-video">
 					<iframe
 						src={`https://www.youtube-nocookie.com/embed/${id}`}
 						title="Video YouTube"
-						className="w-full h-full rounded-box"
 						loading="lazy"
 						allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
 						allowFullScreen
@@ -62,5 +61,9 @@ const components: PortableTextComponents = {
 };
 
 export default function PortableTextBody({ value }: { value: any }) {
-	return <PortableText value={value} components={components} />;
+	return (
+		<div className="pt-body">
+			<PortableText value={value} components={components} />
+		</div>
+	);
 }

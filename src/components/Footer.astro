@@ -1,40 +1,127 @@
 ---
-import { address, contact, socials } from '../data/parish';
+import IconButton from "./ui/IconButton.astro";
+import { addressLines, contact, socials } from "../data/parish";
+
+const links = [
+	{ href: "/", label: "Home" },
+	{ href: "/info/orari", label: "Orari" },
+	{ href: "/notizie", label: "Avvisi e notizie" },
+	{ href: "/eventi", label: "Calendario" },
+	{ href: "/info/contatti", label: "Contatti" },
+	{ href: "/info/dove-siamo", label: "Dove siamo" },
+];
+const footerSocials = socials.filter((s) => s.icon !== "twitter");
 ---
 
-<footer class="footer sm:footer-horizontal bg-base-300 text-base-content px-6 sm:px-10 py-10">
-	<nav class="flex flex-col items-start">
-		<div class="flex items-center gap-2 mb-2">
-			<img src="/logo-icon.svg" width="32" height="32" alt="" class="h-8 w-8 rounded-full shadow-sm shrink-0" loading="lazy" decoding="async" />
-			<span class="font-semibold">Parrocchia S. M. Addolorata</span>
+<footer class="site-footer">
+	<div class="site-footer__inner">
+		<div class="site-footer__grid">
+			<div class="site-footer__col">
+				<span class="site-footer__brand">
+					<span class="site-footer__logo"><img src="/logo-icon.svg" alt="" width="46" height="46" loading="lazy" /></span>
+					<span>Parrocchia<br />S. M. Addolorata</span>
+				</span>
+				<span class="site-footer__address">{addressLines[0]}<br />{addressLines[1]}</span>
+			</div>
+			<nav class="site-footer__col" aria-label="Esplora">
+				<span class="site-footer__title">Esplora</span>
+				{links.map((l) => <a href={l.href}>{l.label}</a>)}
+			</nav>
+			<div class="site-footer__col">
+				<span class="site-footer__title">Contatti</span>
+				<a href={contact.phoneHref}>{contact.phone}</a>
+				<a href={`mailto:${contact.email}`}>{contact.email}</a>
+			</div>
+			<div class="site-footer__col">
+				<span class="site-footer__title">Seguici</span>
+				<div class="site-footer__social">
+					{footerSocials.map((s) => <IconButton icon={s.icon} label={s.name} variant="onDark" href={s.href} external />)}
+					<IconButton icon="mail" label="Email" variant="onDark" href={`mailto:${contact.email}`} />
+				</div>
+			</div>
 		</div>
-		<p class="max-w-60 text-sm text-base-content/70">{address}</p>
-	</nav>
-	<nav>
-		<h6 class="footer-title">Esplora</h6>
-		<a href="/" class="link link-hover">Home</a>
-		<a href="/info" class="link link-hover">La parrocchia</a>
-		<a href="/notizie" class="link link-hover">Avvisi e notizie</a>
-		<a href="/eventi" class="link link-hover">Calendario</a>
-	</nav>
-	<nav>
-		<h6 class="footer-title">Contatti</h6>
-		<a href={contact.phoneHref} class="link link-hover">{contact.phone}</a>
-		<a href={`mailto:${contact.email}`} class="link link-hover">{contact.email}</a>
-	</nav>
-	<nav>
-		<h6 class="footer-title">Seguici</h6>
-		<div class="flex flex-col gap-1">
-			{
-				socials.map((social) => (
-					<a href={social.href} target="_blank" rel="noopener noreferrer" class="link link-hover">
-						{social.name}
-					</a>
-				))
-			}
-		</div>
-	</nav>
+		<div class="site-footer__bottom">© {new Date().getFullYear()} Parrocchia Santa Maria Addolorata · Diocesi di Roma</div>
+	</div>
 </footer>
-<div class="bg-base-300 border-t border-base-content/10 px-6 sm:px-10 py-4 text-center text-xs text-base-content/60">
-	© {new Date().getFullYear()} Parrocchia Santa Maria Addolorata
-</div>
+
+<style>
+	.site-footer {
+		background: var(--surface-ink);
+		color: var(--text-on-dark-muted);
+	}
+	.site-footer__inner {
+		max-width: var(--container-max);
+		margin: 0 auto;
+		padding: 56px var(--container-pad) 28px;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		gap: 40px;
+	}
+	.site-footer__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+		gap: 32px;
+	}
+	.site-footer__col {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.site-footer__col:first-child {
+		gap: 14px;
+	}
+	.site-footer__brand {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		font-weight: 600;
+		font-size: 17px;
+		line-height: 1.2;
+		color: var(--text-on-dark);
+	}
+	.site-footer__logo {
+		width: 52px;
+		height: 52px;
+		border-radius: 50%;
+		background: var(--stone-0);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+	}
+	.site-footer__logo img {
+		width: 46px;
+		height: 46px;
+		display: block;
+	}
+	.site-footer__address {
+		font-size: 15px;
+		line-height: 1.5;
+	}
+	.site-footer__title {
+		font: var(--type-eyebrow);
+		letter-spacing: var(--ls-eyebrow);
+		text-transform: uppercase;
+		color: var(--teal-300);
+	}
+	.site-footer__col a {
+		font-size: 15px;
+		color: var(--text-on-dark-muted);
+		text-decoration: none;
+	}
+	.site-footer__col a:hover {
+		color: var(--text-on-dark);
+	}
+	.site-footer__social {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		margin-top: 2px;
+	}
+	.site-footer__bottom {
+		padding-top: 20px;
+		border-top: 1px solid rgba(255, 255, 255, 0.14);
+		font-size: 13px;
+	}
+</style>

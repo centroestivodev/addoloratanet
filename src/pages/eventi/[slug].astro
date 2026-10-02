@@ -1,72 +1,409 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
+import EventCardRow from "../../components/EventCard.astro";
+import Badge from "../../components/ui/Badge.astro";
+import Button from "../../components/ui/Button.astro";
+import Card from "../../components/ui/Card.astro";
+import DateBadge from "../../components/ui/DateBadge.astro";
+import Icon from "../../components/ui/Icon.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import TagDot from "../../components/ui/TagDot.astro";
+import TextLink from "../../components/ui/TextLink.astro";
 import { sanityClient } from "sanity:client";
 import { urlFor } from "../../sanity/lib/image";
 import { truncate } from "../../sanity/lib/text";
-import { formatEventDate } from "../../sanity/lib/eventDate";
+import { toPlainText } from "../../sanity/lib/portableText";
+import { dayInRome, formatDay, formatTimeLong, formatWhenLong, todayInRome } from "../../sanity/lib/eventDate";
+import { EVENT_CARD_FIELDS, PARROCO_BADGE, TAG_FIELDS, type EventCard } from "../../sanity/lib/queries";
 
-export async function getStaticPaths() {
-	const events = await sanityClient.fetch<{ slug: string }[]>(
-		`*[_type == "event" && defined(slug.current)]{ "slug": slug.current }`
-	);
-	return events.map((event) => ({ params: { slug: event.slug } }));
-}
+// Pagina generata a ogni richiesta: gli appuntamenti suggeriti dipendono da oggi
+export const prerender = false;
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
 
 const { slug } = Astro.params;
+const today = todayInRome();
 
 const event = await sanityClient.fetch(
 	`*[_type == "event" && slug.current == $slug][0]{
-		title, description, image, eventDate, startTime, endDate, endTime,
-		"imageDimensions": image.asset->metadata.dimensions,
-		"relatedPost": relatedPost->{ title, "slug": slug.current }
+		${EVENT_CARD_FIELDS},
+		"relatedPost": relatedPost->{
+			_id, title, "slug": slug.current, badge, body, "cover": images[0],
+			"publishedAt": coalesce(publishedAt, _createdAt),
+			"tags": tags[]->{ ${TAG_FIELDS} }
+		},
+		"siblings": *[_type == "event" && defined(slug.current) && slug.current != $slug
+			&& defined(^.relatedPost) && relatedPost._ref == ^.relatedPost._ref
+			&& coalesce(endDate, eventDate) >= $today] | order(eventDate asc, startTime asc){ ${EVENT_CARD_FIELDS} },
+		"upcoming": *[_type == "event" && defined(slug.current) && slug.current != $slug
+			&& coalesce(endDate, eventDate) >= $today] | order(eventDate asc, startTime asc)[0...4]{ ${EVENT_CARD_FIELDS} }
 	}`,
-	{ slug }
+	{ slug, today },
 );
 
 if (!event) {
 	return Astro.redirect("/eventi");
 }
 
-const imageWidth = 1200;
+const siblings: EventCard[] = event.siblings ?? [];
+const list: EventCard[] = siblings.length ? siblings : (event.upcoming ?? []);
+const listTitle = siblings.length ? "Gli altri incontri" : "Prossimi appuntamenti";
+const post = event.relatedPost?.slug ? event.relatedPost : undefined;
+const timeLong = formatTimeLong(event);
+const image = event.image?.asset ? event.image : undefined;
+const imageWidth = 840;
 const imageHeight = event.imageDimensions
 	? Math.round((imageWidth * event.imageDimensions.height) / event.imageDimensions.width)
 	: undefined;
+const shareUrl = new URL(`/eventi/${slug}`, Astro.url.origin).toString();
 ---
 
 <Layout title={event.title} description={truncate(event.description, 160)}>
-	<Container class="py-12">
-		<div class="max-w-3xl mx-auto">
-			<a href="/eventi" class="link link-hover text-sm text-base-content/60">← Calendario</a>
-
-			<span class="block text-xs text-base-content/60 mt-4">
-				{formatEventDate(event)}
-			</span>
-			<h1 class="text-3xl font-bold mt-2 mb-6">{event.title}</h1>
-
+	<Container class="page-top" width={1080}>
+		<TextLink href="/eventi" arrow="left">Calendario</TextLink>
+		<div class="event-layout">
 			{
-				event.image && (
-					<img
-						src={urlFor(event.image).width(imageWidth).auto("format").url()}
-						width={imageWidth}
-						height={imageHeight}
-						alt={event.image.alt || event.title}
-						class="rounded-box mb-8 w-full h-auto"
-						loading="eager"
-						decoding="async"
-					/>
+				image && (
+					<div class="event-image only-desk">
+						<img
+							src={urlFor(image).width(imageWidth).auto("format").url()}
+							width={imageWidth}
+							height={imageHeight}
+							alt={image.alt || ""}
+							loading="eager"
+							decoding="async"
+						/>
+					</div>
 				)
 			}
-
-			<p class="whitespace-pre-line leading-relaxed">{event.description}</p>
-
-			{
-				event.relatedPost?.slug && (
-					<a href={`/notizie/${event.relatedPost.slug}`} class="link link-primary inline-block mt-8">
-						Leggi di più: {event.relatedPost.title} →
-					</a>
-				)
-			}
+			<div class="event-main">
+				<h1>{event.title}</h1>
+				{
+					image && (
+						<div class="event-image event-image--inline only-mob">
+							<img
+								src={urlFor(image).width(imageWidth).auto("format").url()}
+								width={imageWidth}
+								height={imageHeight}
+								alt={image.alt || ""}
+								loading="eager"
+								decoding="async"
+							/>
+						</div>
+					)
+				}
+				<div class="event-when">
+					<DateBadge date={event.eventDate} tone="navy" showWeekday />
+					<div class="event-when__text">
+						<span class="event-when__day">{formatWhenLong(event)}</span>
+						{
+							timeLong && (
+								<span class="event-when__time">
+									<span class="event-when__icon">
+										<Icon name="clock" size={18} />
+									</span>
+									{timeLong}
+								</span>
+							)
+						}
+					</div>
+				</div>
+				<p class="event-description">{event.description}</p>
+				{
+					event.tags?.length > 0 && (
+						<div class="event-tags">
+							{event.tags.map((tag: { name: string; slug: string; color?: string }) => (
+								<a href={`/eventi?tag=${tag.slug}`} class="event-tag">
+									<TagDot name={tag.name} color={tag.color} />
+								</a>
+							))}
+						</div>
+					)
+				}
+				<div class="event-actions">
+					<Button href={`/eventi/${slug}.ics`} iconLeft="calendar" download={`${slug}.ics`}>Aggiungi al calendario</Button>
+					<Button variant="outline" iconLeft="share-2" data-share={shareUrl} data-title={event.title}>
+						<span data-share-label>Condividi</span>
+					</Button>
+				</div>
+			</div>
 		</div>
+
+		{
+			post && (
+				<div class="event-post">
+					<span class="eyebrow">Leggi l'articolo</span>
+					<Card href={`/notizie/${post.slug}`} padding={0}>
+						<div class="event-post__inner">
+							{post.cover?.asset && (
+								<div class="event-post__media">
+									<img src={urlFor(post.cover).width(800).height(600).auto("format").url()} alt={post.cover.alt || ""} loading="lazy" decoding="async" />
+								</div>
+							)}
+							<div class="event-post__body">
+								<div class="event-post__meta">
+									{post.badge === PARROCO_BADGE && <Badge tone="navy">Comunicazione del parroco</Badge>}
+									{(post.tags ?? []).filter(Boolean).map((tag: { name: string; color?: string }) => (
+										<TagDot name={tag.name} color={tag.color} />
+									))}
+									<span class="event-post__date">{formatDay(dayInRome(post.publishedAt))}</span>
+								</div>
+								<h2>{post.title}</h2>
+								<p>{toPlainText(post.body, 220)}</p>
+								<span class="event-post__more">
+									Leggi tutto
+									<Icon name="arrow-right" size={18} />
+								</span>
+							</div>
+						</div>
+					</Card>
+				</div>
+			)
+		}
+
+		{
+			list.length > 0 && (
+				<div class="event-list">
+					<div class="event-list__head">
+						<SectionHeading size="sm" title={listTitle} />
+						<TextLink href="/eventi">Vedi il calendario</TextLink>
+					</div>
+					<div class="event-list__grid">
+						{list.map((e) => (
+							<EventCardRow event={e} />
+						))}
+					</div>
+				</div>
+			)
+		}
 	</Container>
 </Layout>
+
+<script>
+	// Condivisione: menu di sistema dove c'è, altrimenti copia del link
+	document.querySelectorAll<HTMLButtonElement>("[data-share]").forEach((button) => {
+		const label = button.querySelector("[data-share-label]");
+		let timer: ReturnType<typeof setTimeout>;
+		button.addEventListener("click", async () => {
+			const url = button.dataset.share!;
+			if (navigator.share) {
+				try {
+					await navigator.share({ title: button.dataset.title, url });
+				} catch {
+					// condivisione annullata
+				}
+				return;
+			}
+			try {
+				await navigator.clipboard.writeText(url);
+				if (label) label.textContent = "Link copiato";
+				clearTimeout(timer);
+				timer = setTimeout(() => label && (label.textContent = "Condividi"), 2000);
+			} catch {
+				window.prompt("Copia il link dell'evento", url);
+			}
+		});
+	});
+</script>
+
+<style>
+	.event-layout {
+		display: flex;
+		flex-wrap: wrap;
+		gap: clamp(28px, 5vw, 56px);
+		margin-top: 32px;
+		align-items: flex-start;
+	}
+	.event-image {
+		flex: 1 1 280px;
+		max-width: 420px;
+		background: var(--bg-muted);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+		box-shadow: var(--shadow-sm);
+		border: 1px solid var(--border-subtle);
+	}
+	.event-image--inline {
+		max-width: none;
+	}
+	.event-image img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.event-main {
+		flex: 1.4 1 360px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		max-width: 640px;
+	}
+	h1 {
+		margin: 0;
+		font: var(--type-h1);
+		letter-spacing: var(--ls-tight);
+		color: var(--text-strong);
+		text-wrap: balance;
+	}
+	.event-when {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 16px 0;
+		border-top: 1px solid var(--border-default);
+		border-bottom: 1px solid var(--border-default);
+	}
+	.event-when__text {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.event-when__day {
+		font-size: 17px;
+		font-weight: 600;
+		line-height: 1.35;
+		color: var(--text-strong);
+		text-wrap: pretty;
+	}
+	.event-when__time {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 16px;
+		line-height: 1.4;
+		color: var(--text-body);
+	}
+	.event-when__icon {
+		color: var(--icon-brand);
+		display: flex;
+		flex: none;
+	}
+	.event-description {
+		margin: 0;
+		font: var(--type-lead);
+		color: var(--text-body);
+		text-wrap: pretty;
+		white-space: pre-line;
+	}
+	.event-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.event-tag {
+		display: inline-flex;
+		align-items: center;
+		height: 32px;
+		padding: 0 13px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-body);
+		text-decoration: none;
+	}
+	.event-tag:hover {
+		border-color: var(--border-strong);
+		background: var(--bg-sunken);
+		color: var(--text-body);
+	}
+	.event-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+	.event-post {
+		margin-top: var(--section-gap);
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.event-post__inner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: stretch;
+	}
+	.event-post__media {
+		flex: 1 1 320px;
+		min-height: 240px;
+		background: var(--bg-muted);
+		position: relative;
+		overflow: hidden;
+	}
+	.event-post__media img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.event-post__body {
+		flex: 1.5 1 420px;
+		min-width: 0;
+		padding: clamp(24px, 3.5vw, 40px);
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+	.event-post__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 14px;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-muted);
+	}
+	.event-post__date {
+		font-weight: 500;
+	}
+	.event-post__body h2 {
+		margin: 0;
+		font: var(--type-h2);
+		color: var(--text-strong);
+		text-wrap: balance;
+	}
+	.event-post__body p {
+		margin: 0;
+		font: var(--type-lead);
+		color: var(--text-body);
+		text-wrap: pretty;
+		max-width: 640px;
+	}
+	.event-post__more {
+		margin-top: auto;
+		padding-top: 8px;
+		font-weight: 600;
+		color: var(--text-link);
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.event-list {
+		margin-top: var(--section-gap);
+	}
+	.event-list__head {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+	.event-list__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+		gap: 16px;
+		margin-top: 20px;
+	}
+	@media (max-width: 639px) {
+		.event-post__body {
+			flex-basis: 100%;
+		}
+	}
+</style>

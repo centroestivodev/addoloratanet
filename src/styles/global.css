@@ -1,45 +1,237 @@
 @import "tailwindcss";
-@import "@fontsource-variable/fraunces";
 
+/* daisyUI serve ancora alla classifica del FantaSantiago */
 @plugin "daisyui" {
 	themes: autumn --default;
 }
 
-@plugin "daisyui/theme" {
-	name: "autumn-dark";
-	default: false;
-	prefersdark: true;
-	color-scheme: dark;
-	--color-base-100: oklch(18% 0.012 40);
-	--color-base-200: oklch(22% 0.014 40);
-	--color-base-300: oklch(27% 0.016 40);
-	--color-base-content: oklch(93% 0.008 40);
-	--color-primary: oklch(62% 0.17 17.53);
-	--color-primary-content: oklch(97% 0.02 17.53);
-	--color-secondary: oklch(66% 0.16 23.865);
-	--color-secondary-content: oklch(15% 0.03 23.865);
-	--color-accent: oklch(78% 0.1 60.729);
-	--color-accent-content: oklch(18% 0.02 60.729);
-	--color-neutral: oklch(32% 0.02 51.902);
-	--color-neutral-content: oklch(90% 0.007 51.902);
-	--color-info: oklch(72% 0.11 207.284);
-	--color-info-content: oklch(15% 0.02 207.284);
-	--color-success: oklch(66% 0.1 174.616);
-	--color-success-content: oklch(14% 0.018 174.616);
-	--color-warning: oklch(74% 0.17 56.844);
-	--color-warning-content: oklch(16% 0.032 56.844);
-	--color-error: oklch(63% 0.22 24.16);
-	--color-error-content: oklch(94% 0.05 24.16);
-	--radius-selector: 1rem;
-	--radius-field: 0.5rem;
-	--radius-box: 1rem;
-	--size-selector: 0.25rem;
-	--size-field: 0.25rem;
-	--border: 1px;
-	--depth: 1;
-	--noise: 0;
-}
+/* Design system Santa Maria Addolorata: token e font */
+@import "./ds/tokens/fonts.css";
+@import "./ds/tokens/colors.css";
+@import "./ds/tokens/typography.css";
+@import "./ds/tokens/spacing.css";
 
 @theme {
-	--font-display: "Fraunces Variable", serif;
+	--font-display: "Fraunces", Georgia, "Times New Roman", serif;
+	--font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+		background: var(--bg-page);
+		color-scheme: light;
+	}
+	body {
+		margin: 0;
+		background: var(--bg-page);
+		color: var(--text-body);
+		font: var(--type-body);
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+		color: var(--text-strong);
+		letter-spacing: var(--ls-tight);
+		text-wrap: balance;
+	}
+	p {
+		text-wrap: pretty;
+	}
+	a {
+		color: var(--text-link);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+		transition: color var(--dur-fast) var(--ease-out);
+	}
+	a:hover {
+		color: var(--text-link-hover);
+	}
+	:focus-visible {
+		outline: 2px solid var(--border-focus);
+		outline-offset: 2px;
+	}
+	::selection {
+		background: var(--teal-100);
+		color: var(--ink-900);
+	}
+}
+
+/* Contenitori di pagina */
+.container-page {
+	max-width: var(--container-max);
+	margin: 0 auto;
+	padding: 0 var(--container-pad);
+	box-sizing: border-box;
+}
+.page-top {
+	padding-top: 40px;
+}
+
+/* Etichetta maiuscola spaziata (eyebrow) */
+.eyebrow {
+	font: var(--type-eyebrow);
+	letter-spacing: var(--ls-eyebrow);
+	text-transform: uppercase;
+	color: var(--text-brand);
+}
+
+/* Titoletto delle sezioni nelle colonne laterali */
+.caption-title {
+	margin: 0;
+	font: var(--type-caption);
+	font-weight: 600;
+	letter-spacing: var(--ls-wide);
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+/* Riquadro bianco con bordo sottile, per le colonne laterali */
+.panel {
+	background: var(--surface-card);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+}
+
+/* Righe-link dentro i pannelli (appuntamenti, allegati) */
+.row-link {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	padding: 8px 12px;
+	margin: 0 -12px;
+	border-radius: var(--radius-md);
+	text-decoration: none;
+	color: inherit;
+}
+.row-link:hover {
+	background: var(--bg-sunken);
+	color: inherit;
+}
+
+/* Testo troncato a N righe */
+.clamp-2,
+.clamp-3,
+.clamp-4 {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.clamp-2 {
+	-webkit-line-clamp: 2;
+}
+.clamp-3 {
+	-webkit-line-clamp: 3;
+}
+.clamp-4 {
+	-webkit-line-clamp: 4;
+}
+
+/* Visibilità per breakpoint: mobile < 640px */
+@media (max-width: 639px) {
+	.only-desk {
+		display: none !important;
+	}
+}
+@media (min-width: 640px) {
+	.only-mob {
+		display: none !important;
+	}
+}
+
+/* Corpo degli articoli (Portable Text) */
+.pt-body {
+	font-size: 18px;
+	line-height: 1.7;
+	color: var(--text-body);
+}
+.pt-body > :first-child {
+	margin-top: 0;
+}
+.pt-body a {
+	color: var(--text-link);
+	text-underline-offset: 3px;
+}
+.pt-p {
+	margin: 0 0 20px;
+	text-wrap: pretty;
+}
+.pt-strong {
+	font-weight: 700;
+	color: var(--text-strong);
+}
+.pt-h2 {
+	margin: 44px 0 14px;
+	font: var(--type-h2);
+	color: var(--text-strong);
+}
+.pt-h3 {
+	margin: 32px 0 10px;
+	font: var(--type-h3);
+	color: var(--text-strong);
+}
+.pt-quote {
+	margin: 36px 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.pt-quote__mark {
+	font-family: var(--font-display);
+	font-size: 56px;
+	line-height: 0.6;
+	height: 26px;
+	color: var(--ochre-500);
+}
+.pt-quote p {
+	margin: 0;
+	font-family: var(--font-display);
+	font-style: italic;
+	font-weight: 500;
+	font-size: clamp(22px, 2.4vw, 27px);
+	line-height: 1.4;
+	color: var(--navy-700);
+	text-wrap: balance;
+}
+.pt-list {
+	margin: 0 0 24px;
+	padding-left: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+ul.pt-list {
+	list-style: disc;
+}
+ol.pt-list {
+	list-style: decimal;
+}
+.pt-list li {
+	padding-left: 4px;
+}
+.pt-image {
+	display: block;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	object-fit: cover;
+	border-radius: var(--radius-lg);
+	margin: 32px 0;
+}
+.pt-video {
+	aspect-ratio: 16 / 9;
+	margin: 32px 0;
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	background: var(--navy-900);
+}
+.pt-video iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
 }

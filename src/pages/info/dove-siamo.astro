@@ -1,14 +1,15 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
-import MapPinIcon from "../../assets/icons/map-pin.svg";
-import { address } from "../../data/parish";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import Button from "../../components/ui/Button.astro";
+import Icon from "../../components/ui/Icon.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import { address, addressLines, coordinates, neighbourhood } from "../../data/parish";
 
 const mapsQuery = encodeURIComponent(address);
-
-const lat = 41.897757;
-const lon = 12.560785;
-const bbox = [lon - 0.01, lat - 0.006, lon + 0.01, lat + 0.006].join(",");
+const { lat, lon } = coordinates;
+const bbox = [lon - 0.012, lat - 0.005, lon + 0.012, lat + 0.005].join(",");
 const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
 ---
 
@@ -16,41 +17,126 @@ const osmEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox
 	title="Dove siamo"
 	description="Indirizzo e indicazioni stradali per raggiungere la Parrocchia Santa Maria Addolorata a Roma."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Dove siamo</h1>
-		<p class="text-base-content/70 mb-10">
-			La chiesa si trova nel quartiere Prenestino-Labicano, facilmente raggiungibile con i mezzi
-			pubblici.
-		</p>
-
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-			<div class="sm:col-span-1">
-				<div class="card bg-base-200">
-					<div class="card-body">
-						<div class="flex items-start gap-2">
-							<MapPinIcon class="h-5 w-5 text-primary shrink-0 mt-1" />
-							<p>{address}</p>
-						</div>
-						<a
-							class="btn btn-primary btn-sm mt-4"
-							href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Apri in Google Maps
-						</a>
+	<Container class="page-top">
+		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info", href: "/info" }, { label: "Dove siamo" }]} />
+		<div class="heading">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="Dove siamo"
+				description="La chiesa si trova nel quartiere Prenestino-Labicano, facilmente raggiungibile con i mezzi pubblici."
+			/>
+		</div>
+		<div class="map-wrap">
+			<div class="map">
+				<iframe title={`Mappa: ${address}`} src={osmEmbedSrc} loading="lazy"></iframe>
+			</div>
+			<div class="map-card">
+				<div class="map-card__address">
+					<span class="map-card__icon"><Icon name="map-pin" size={22} /></span>
+					<div>
+						<span class="map-card__street">{addressLines[0]}</span>
+						<span class="map-card__city">{addressLines[1]} · {neighbourhood}</span>
 					</div>
 				</div>
-			</div>
-
-			<div class="sm:col-span-2 aspect-video overflow-hidden rounded-box border border-base-300">
-				<iframe
-					class="w-full h-full"
-					loading="lazy"
-					src={osmEmbedSrc}
-					title="Mappa: Parrocchia Santa Maria Addolorata"
-				></iframe>
+				<div class="map-card__actions">
+					<Button iconRight="external-link" fullWidth external href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}>
+						Apri in Google Maps
+					</Button>
+					<Button variant="outline" iconLeft="map-pin" fullWidth external href={`https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`}>
+						Indicazioni stradali
+					</Button>
+				</div>
 			</div>
 		</div>
 	</Container>
 </Layout>
+
+<style>
+	.heading {
+		margin-top: 24px;
+	}
+	.map-wrap {
+		position: relative;
+		margin-top: 32px;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+	.map {
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+		border: 1px solid var(--border-subtle);
+		box-shadow: var(--shadow-sm);
+		background: var(--bg-muted);
+		height: 340px;
+	}
+	.map iframe {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: 0;
+	}
+	.map-card {
+		box-sizing: border-box;
+		width: 100%;
+		padding: 28px;
+		border-radius: var(--radius-lg);
+		background: var(--surface-card);
+		border: 1px solid var(--border-subtle);
+		box-shadow: var(--shadow-md);
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+	.map-card__address {
+		display: flex;
+		gap: 14px;
+		align-items: flex-start;
+	}
+	.map-card__address > div {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+	.map-card__icon {
+		flex: none;
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		background: var(--surface-brand-soft);
+		color: var(--icon-brand);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.map-card__street {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 22px;
+		line-height: 1.25;
+		color: var(--text-strong);
+	}
+	.map-card__city {
+		font-size: 15px;
+		color: var(--text-muted);
+	}
+	.map-card__actions {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	@media (min-width: 860px) {
+		.map {
+			height: 520px;
+		}
+		.map-card {
+			position: absolute;
+			top: 24px;
+			left: 24px;
+			width: 380px;
+			max-width: 100%;
+		}
+	}
+</style>

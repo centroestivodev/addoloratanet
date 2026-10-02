@@ -1,130 +1,157 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
-
-const periods = [
-	{
-		id: "set-apr",
-		label: "1 Set - 30 Apr",
-		feriali: ["9:00", "10:00", "18:00"],
-		festivi: ["8:00", "9:00", "10:00", "11:00", "12:00", "18:00"],
-		start: { month: 9, day: 1 },
-		end: { month: 4, day: 30 },
-	},
-	{
-		id: "mag-giu",
-		label: "1 Mag - 30 Giu",
-		feriali: ["9:00", "10:00", "19:00"],
-		festivi: ["8:00", "9:00", "10:00", "11:00", "12:00", "19:00"],
-		start: { month: 5, day: 1 },
-		end: { month: 6, day: 30 },
-	},
-	{
-		id: "lug",
-		label: "1 - 31 Lug",
-		feriali: ["9:00", "19:00"],
-		festivi: ["8:00", "9:00", "10:00", "11:00", "19:00"],
-		start: { month: 7, day: 1 },
-		end: { month: 7, day: 31 },
-	},
-	{
-		id: "ago",
-		label: "1 - 31 Ago",
-		feriali: ["9:00", "19:00"],
-		festivi: ["8:00", "9:00", "11:00", "19:00"],
-		start: { month: 8, day: 1 },
-		end: { month: 8, day: 31 },
-	},
-];
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import MassTimes from "../../components/ui/MassTimes.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import { massPeriods, rosario, segreteria, vespri } from "../../data/parish";
 ---
 
 <Layout
 	title="Orari"
 	description="Orari delle SS. Messe, vespri, rosario e apertura della segreteria della Parrocchia Santa Maria Addolorata."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Orari</h1>
-		<p class="text-base-content/70 mb-10">
-			Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli
-			orari delle SS. Messe.
-		</p>
+	<Container class="page-top">
+		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info", href: "/info" }, { label: "Orari" }]} />
+		<div class="orari-heading">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="Orari delle SS. Messe"
+				description="Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli orari delle SS. Messe."
+			/>
+		</div>
 
-		<div class="tabs tabs-lift mb-10">
+		<div class="period-tabs" role="tablist" aria-label="Periodo dell'anno" data-periods>
 			{
-				periods.map((period, i) => (
-					<>
-						<input
-							type="radio"
-							name="orari-tabs"
-							id={`tab-${period.id}`}
-							class="tab"
-							aria-label={period.label}
-							checked={i === 0}
-						/>
-						<div class="tab-content bg-base-100 border-base-300 p-6">
-							<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-								<div>
-									<h3 class="font-semibold mb-2">SS. Messe festive</h3>
-									<ul class="flex flex-wrap gap-2">
-										{period.festivi.map((time) => (
-											<li class="badge badge-lg badge-primary badge-outline">{time}</li>
-										))}
-									</ul>
-								</div>
-								<div>
-									<h3 class="font-semibold mb-2">SS. Messe feriali</h3>
-									<ul class="flex flex-wrap gap-2">
-										{period.feriali.map((time) => (
-											<li class="badge badge-lg badge-outline">{time}</li>
-										))}
-									</ul>
-								</div>
-							</div>
-						</div>
-					</>
+				massPeriods.map((p, i) => (
+					<button
+						type="button"
+						role="tab"
+						id={`tab-${p.id}`}
+						aria-controls={`panel-${p.id}`}
+						aria-selected={i === 0 ? "true" : "false"}
+						data-period={p.id}
+						data-months={p.months.join(",")}
+					>
+						<span>{p.label}</span>
+						<span class="period-tabs__sub">{p.sublabel}</span>
+					</button>
 				))
 			}
 		</div>
 
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title text-base">Rosario</h2>
-					<p class="text-base-content/70">Tutti i giorni alle 18:30</p>
+		{
+			massPeriods.map((p, i) => (
+				<div role="tabpanel" id={`panel-${p.id}`} aria-labelledby={`tab-${p.id}`} hidden={i !== 0} data-panel={p.id}>
+					<p class="period-range">{p.range}</p>
+					<div class="mass-grid">
+						<MassTimes title="SS. Messe festive" subtitle="Domenica e giorni festivi" icon="church" times={p.festive} />
+						<MassTimes title="SS. Messe feriali" subtitle="Da lunedì a sabato" icon="clock" times={p.feriali} />
+					</div>
 				</div>
-			</div>
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title text-base">Vespri</h2>
-					<p class="text-base-content/70">Tutti i giorni alle 19:30</p>
-				</div>
-			</div>
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title text-base">Segreteria parrocchiale</h2>
-					<p class="text-base-content/70">Da lunedì a sabato, dalle 17:00 alle 19:00</p>
-				</div>
-			</div>
+			))
+		}
+
+		<h2 class="all-year">Tutto l'anno</h2>
+		<div class="mass-grid mass-grid--small">
+			<MassTimes title="Rosario" subtitle="Tutti i giorni" icon="heart" times={rosario} />
+			<MassTimes title="Vespri" subtitle="Tutti i giorni" icon="book-open" times={vespri} />
+			<MassTimes title="Segreteria parrocchiale" subtitle={segreteria.days} icon="info" times={segreteria.times} />
 		</div>
 	</Container>
-
-	<script define:vars={{ periods: periods.map((p) => ({ id: p.id, start: p.start, end: p.end })) }}>
-		const today = new Date();
-		const month = today.getMonth() + 1;
-		const day = today.getDate();
-		const todayValue = month * 100 + day;
-
-		function inRange(value, start, end) {
-			const s = start.month * 100 + start.day;
-			const e = end.month * 100 + end.day;
-			if (s <= e) return value >= s && value <= e;
-			return value >= s || value <= e; // range wraps around the new year
-		}
-
-		const match = periods.find((p) => inRange(todayValue, p.start, p.end));
-		if (match) {
-			const radio = document.getElementById(`tab-${match.id}`);
-			if (radio) radio.checked = true;
-		}
-	</script>
 </Layout>
+
+<script>
+	const tabs = [...document.querySelectorAll<HTMLButtonElement>("[data-period]")];
+	const select = (id: string) => {
+		for (const tab of tabs) tab.setAttribute("aria-selected", String(tab.dataset.period === id));
+		document.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => {
+			panel.hidden = panel.dataset.panel !== id;
+		});
+	};
+	tabs.forEach((tab) => tab.addEventListener("click", () => select(tab.dataset.period!)));
+	// All'apertura si mostra il periodo in corso
+	const month = new Date().getMonth() + 1;
+	const current = tabs.find((t) => t.dataset.months!.split(",").map(Number).includes(month));
+	if (current) select(current.dataset.period!);
+</script>
+
+<style>
+	.orari-heading {
+		margin-top: 24px;
+	}
+	.period-tabs {
+		margin-top: 28px;
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		padding: 4px;
+		max-width: 100%;
+		box-sizing: border-box;
+		background: var(--bg-muted);
+		border-radius: var(--radius-pill);
+	}
+	.period-tabs button {
+		min-height: 46px;
+		padding: 4px 16px;
+		border: none;
+		border-radius: var(--radius-pill);
+		background: transparent;
+		color: var(--text-muted);
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		white-space: nowrap;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		line-height: 1.15;
+		transition:
+			background var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
+	}
+	.period-tabs button:hover,
+	.period-tabs button[aria-selected="true"] {
+		color: var(--text-strong);
+	}
+	.period-tabs button[aria-selected="true"] {
+		background: var(--surface-card);
+		box-shadow: var(--shadow-sm);
+	}
+	.period-tabs__sub {
+		font-size: 11.5px;
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+	@media (max-width: 639px) {
+		.period-tabs {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			width: 100%;
+			border-radius: 24px;
+		}
+	}
+	.period-range {
+		margin: 24px 0 0;
+		font-size: 16px;
+		font-weight: 600;
+		color: var(--text-strong);
+	}
+	.mass-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+		gap: 20px;
+		margin-top: 16px;
+	}
+	.mass-grid--small {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+	}
+	.all-year {
+		margin: 48px 0 0;
+		font: var(--type-h4);
+		color: var(--text-strong);
+	}
+</style>

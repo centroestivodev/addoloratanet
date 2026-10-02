@@ -1,0 +1,45 @@
+/* Type tokens. Fraunces (display serif, confirmed from redesign) + Figtree (UI/body sans, nearest Google match to the redesign's system UI face). */
+:root{
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif; /* @kind font */
+  --font-sans:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif; /* @kind font */
+  --font-mono:ui-monospace,'SF Mono',Menlo,monospace; /* @kind font */
+
+  --fw-light:300; /* @kind font */
+  --fw-regular:400; /* @kind font */
+  --fw-medium:500; /* @kind font */
+  --fw-semibold:600; /* @kind font */
+  --fw-bold:700; /* @kind font */
+
+  --fs-display:clamp(2.75rem,5.6vw,4.5rem); /* @kind font */
+  --fs-h1:clamp(2.25rem,4vw,3rem); /* @kind font */
+  --fs-h2:clamp(1.75rem,3vw,2.25rem); /* @kind font */
+  --fs-h3:1.5rem; /* @kind font */
+  --fs-h4:1.25rem; /* @kind font */
+  --fs-lead:1.1875rem; /* @kind font */
+  --fs-body:1rem; /* @kind font */
+  --fs-sm:0.875rem; /* @kind font */
+  --fs-xs:0.78125rem; /* @kind font */
+  --fs-eyebrow:0.75rem; /* @kind font */
+
+  --lh-tight:1.08; /* @kind font */
+  --lh-snug:1.25; /* @kind font */
+  --lh-normal:1.5; /* @kind font */
+  --lh-relaxed:1.65; /* @kind font */
+  --ls-tight:-0.015em; /* @kind font */
+  --ls-normal:0; /* @kind font */
+  --ls-wide:0.04em; /* @kind font */
+  --ls-eyebrow:0.22em; /* @kind font */
+
+  /* Semantic */
+  --type-display:var(--fw-semibold) var(--fs-display)/var(--lh-tight) var(--font-display); /* @kind font */
+  --type-h1:var(--fw-semibold) var(--fs-h1)/var(--lh-tight) var(--font-display); /* @kind font */
+  --type-h2:var(--fw-semibold) var(--fs-h2)/var(--lh-snug) var(--font-display); /* @kind font */
+  --type-h3:var(--fw-semibold) var(--fs-h3)/var(--lh-snug) var(--font-display); /* @kind font */
+  --type-h4:var(--fw-semibold) var(--fs-h4)/var(--lh-snug) var(--font-sans); /* @kind font */
+  --type-lead:var(--fw-regular) var(--fs-lead)/var(--lh-relaxed) var(--font-sans); /* @kind font */
+  --type-body:var(--fw-regular) var(--fs-body)/var(--lh-relaxed) var(--font-sans); /* @kind font */
+  --type-ui:var(--fw-medium) var(--fs-body)/var(--lh-normal) var(--font-sans); /* @kind font */
+  --type-small:var(--fw-regular) var(--fs-sm)/var(--lh-normal) var(--font-sans); /* @kind font */
+  --type-caption:var(--fw-medium) var(--fs-xs)/var(--lh-normal) var(--font-sans); /* @kind font */
+  --type-eyebrow:var(--fw-semibold) var(--fs-eyebrow)/1 var(--font-sans); /* @kind font */
+}

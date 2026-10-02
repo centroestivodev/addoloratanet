@@ -31,9 +31,9 @@ const pageTitle = title ? `${title} | ${siteName}` : siteName;
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<title>{pageTitle}</title>
 	</head>
-	<body class="bg-base-100 min-h-screen flex flex-col">
-		<Navbar/>
-		<main class="flex-1">
+	<body>
+		<Navbar />
+		<main>
 			<slot />
 		</main>
 		<Footer />
@@ -41,9 +41,13 @@ const pageTitle = title ? `${title} | ${siteName}` : siteName;
 </html>
 
 <style>
-	html,
 	body {
-		margin: 0;
-		width: 100%;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+	main {
+		flex: 1;
+		padding-bottom: var(--section-gap);
 	}
 </style>

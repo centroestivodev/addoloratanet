@@ -1,66 +1,103 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
-import ClockIcon from "../../assets/icons/clock.svg";
-import MailIcon from "../../assets/icons/mail.svg";
-import MapPinIcon from "../../assets/icons/map-pin.svg";
-import UsersIcon from "../../assets/icons/users.svg";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import Card from "../../components/ui/Card.astro";
+import Icon from "../../components/ui/Icon.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
 
 const sections = [
-	{
-		href: "/info/orari",
-		title: "Orari",
-		description: "Orari delle SS. Messe, vespri, rosario e apertura della segreteria.",
-		Icon: ClockIcon,
-	},
-	{
-		href: "/info/contatti",
-		title: "Contatti",
-		description: "Segreteria parrocchiale, parroco e canali social.",
-		Icon: MailIcon,
-	},
-	{
-		href: "/info/dove-siamo",
-		title: "Dove siamo",
-		description: "Indirizzo della parrocchia e indicazioni stradali.",
-		Icon: MapPinIcon,
-	},
-	{
-		href: "/info/attivita",
-		title: "Gruppi e attività",
-		description: "I gruppi, i cori e le attività della comunità parrocchiale.",
-		Icon: UsersIcon,
-	},
-];
+	{ href: "/info/orari", title: "Orari", description: "Orari delle SS. Messe, vespri, rosario e apertura della segreteria.", icon: "clock" },
+	{ href: "/info/contatti", title: "Contatti", description: "Segreteria parrocchiale, parroco e canali social.", icon: "mail" },
+	{ href: "/info/dove-siamo", title: "Dove siamo", description: "Indirizzo della parrocchia e indicazioni stradali.", icon: "map-pin" },
+	{ href: "/info/attivita", title: "Gruppi e attività", description: "I gruppi, i cori e le attività della comunità parrocchiale.", icon: "users" },
+] as const;
 ---
 
 <Layout
 	title="La parrocchia"
 	description="Tutto quello che c'è da sapere sulla Parrocchia Santa Maria Addolorata: orari, contatti, come raggiungerci e le attività della comunità."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">La parrocchia</h1>
-		<p class="text-base-content/70 mb-10">
-			Tutto quello che c'è da sapere sulla Parrocchia Santa Maria Addolorata: orari, contatti, come
-			raggiungerci e le attività della comunità.
-		</p>
-
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+	<Container class="page-top">
+		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info" }]} />
+		<div class="heading">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="La parrocchia"
+				description="Tutto quello che c'è da sapere sulla Parrocchia Santa Maria Addolorata: orari, contatti, come raggiungerci e le attività della comunità."
+			/>
+		</div>
+		<div class="sections">
 			{
-				sections.map(({ href, title, description, Icon }) => (
-					<a href={href} class="card bg-base-200 hover:shadow-md transition-shadow">
-						<div class="card-body flex-row items-start gap-4">
-							<div class="shrink-0 h-10 w-10 text-primary">
-								<Icon class="h-full w-full" />
-							</div>
-							<div>
-								<h2 class="card-title">{title}</h2>
-								<p class="text-base-content/70">{description}</p>
+				sections.map((s) => (
+					<Card href={s.href}>
+						<div class="section-card">
+							<span class="section-card__icon">
+								<Icon name={s.icon} size={22} />
+							</span>
+							<div class="section-card__text">
+								<h2>{s.title}</h2>
+								<p>{s.description}</p>
+								<span class="section-card__more">Scopri di più →</span>
 							</div>
 						</div>
-					</a>
+					</Card>
 				))
 			}
 		</div>
 	</Container>
 </Layout>
+
+<style>
+	.heading {
+		margin-top: 24px;
+	}
+	.sections {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+		gap: 20px;
+		margin-top: 32px;
+	}
+	.section-card {
+		display: flex;
+		gap: 16px;
+		align-items: flex-start;
+	}
+	.section-card__icon {
+		flex: none;
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		background: var(--surface-brand-soft);
+		color: var(--icon-brand);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.section-card__text {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	h2 {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 22px;
+		line-height: 1.2;
+		color: var(--text-strong);
+	}
+	p {
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.6;
+		color: var(--text-body);
+	}
+	.section-card__more {
+		padding-top: 4px;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-link);
+	}
+</style>

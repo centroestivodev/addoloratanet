@@ -1,64 +1,99 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
+import SectionHeading from "../components/ui/SectionHeading.astro";
+
+const ways = [
+	{
+		title: "5x1000",
+		text: "Nella dichiarazione dei redditi potete destinare il 5x1000 alla parrocchia, senza alcun costo aggiuntivo, indicando il codice fiscale:",
+		code: "[codice fiscale da inserire]",
+	},
+	{
+		title: "Bonifico bancario",
+		text: "Potete fare una donazione libera con un bonifico a:",
+		code: "[IBAN da inserire]",
+	},
+	{
+		title: "Offerte in chiesa",
+		text: "Durante le celebrazioni, o in qualsiasi altro momento, potete lasciare un'offerta libera nelle cassette all'interno della chiesa.",
+	},
+];
 ---
 
 <Layout
 	title="Sostienici"
 	description="Scopri come sostenere la Parrocchia Santa Maria Addolorata: 5x1000, bonifico, offerte e volontariato."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Sostienici</h1>
-		<p class="text-base-content/70 mb-10 max-w-2xl">
-			La vita della parrocchia — le celebrazioni, la cura della chiesa, le attività per i più
-			giovani e il sostegno a chi ha bisogno — vive anche grazie al contributo di chi ci sostiene.
-			Ecco come puoi aiutarci.
-		</p>
+	<Container class="page-top">
+		<SectionHeading
+			as="h1"
+			size="lg"
+			title="Sostienici"
+			description="La vita della parrocchia — le celebrazioni, la cura della chiesa, le attività per i più giovani e il sostegno a chi ha bisogno — vive anche grazie al contributo di chi ci sostiene. Ecco come potete aiutarci."
+		/>
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">5x1000</h2>
-					<p class="text-base-content/70">
-						Nella dichiarazione dei redditi puoi destinare il 5x1000 alla parrocchia, senza alcun
-						costo aggiuntivo, indicando il codice fiscale:
-					</p>
-					<p class="font-mono font-semibold mt-2">[codice fiscale da inserire]</p>
-				</div>
-			</div>
-
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">Bonifico bancario</h2>
-					<p class="text-base-content/70">Puoi effettuare una donazione libera tramite bonifico a:</p>
-					<p class="font-mono font-semibold mt-2">[IBAN da inserire]</p>
-				</div>
-			</div>
-
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">Offerte in chiesa</h2>
-					<p class="text-base-content/70">
-						Durante le celebrazioni, o in qualsiasi altro momento, puoi lasciare un'offerta libera
-						nelle cassette all'interno della chiesa.
-					</p>
-				</div>
-			</div>
-
-			<div class="card bg-base-200">
-				<div class="card-body">
-					<h2 class="card-title">Dona il tuo tempo</h2>
-					<p class="text-base-content/70">
-						Il modo più prezioso per sostenerci è partecipare attivamente: scopri i
-						<a href="/info/attivita" class="link link-primary">gruppi e le attività</a> della parrocchia.
-					</p>
-				</div>
+		<div class="ways">
+			{
+				ways.map((w) => (
+					<div class="panel way">
+						<h2>{w.title}</h2>
+						<p>{w.text}</p>
+						{w.code && <p class="way__code">{w.code}</p>}
+					</div>
+				))
+			}
+			<div class="panel way">
+				<h2>Dona il tuo tempo</h2>
+				<p>
+					Il modo più prezioso per sostenerci è partecipare: scoprite i
+					<a href="/info/attivita">gruppi e le attività</a> della parrocchia.
+				</p>
 			</div>
 		</div>
 
-		<p class="text-base-content/60 text-sm mt-10">
-			Per qualsiasi informazione sulle donazioni puoi
-			<a href="/info/contatti" class="link link-primary">contattare la segreteria parrocchiale</a>.
+		<p class="note">
+			Per qualsiasi informazione sulle donazioni potete
+			<a href="/info/contatti">contattare la segreteria parrocchiale</a>.
 		</p>
 	</Container>
 </Layout>
+
+<style>
+	.ways {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+		gap: 20px;
+		margin-top: 32px;
+	}
+	.way {
+		padding: 28px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	h2 {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 22px;
+		color: var(--text-strong);
+	}
+	p {
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.6;
+		color: var(--text-body);
+	}
+	.way__code {
+		margin-top: 4px;
+		font-family: var(--font-mono);
+		font-weight: 600;
+		color: var(--navy-700);
+	}
+	.note {
+		margin-top: 32px;
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+</style>

@@ -1,0 +1,64 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+	items: { label: string; href?: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="Percorso" class="breadcrumb-ds">
+	<ol>
+		{
+			items.map((item, i) => {
+				const last = i === items.length - 1;
+				return (
+					<li>
+						{last || !item.href ? (
+							<span aria-current={last ? "page" : undefined} class:list={{ current: last }}>
+								{item.label}
+							</span>
+						) : (
+							<a href={item.href}>{item.label}</a>
+						)}
+						{!last && <Icon name="chevron-right" size={14} color="var(--text-subtle)" />}
+					</li>
+				);
+			})
+		}
+	</ol>
+</nav>
+
+<style>
+	.breadcrumb-ds {
+		font-family: var(--font-sans);
+		font-size: 14px;
+	}
+	ol {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	li {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--text-muted);
+	}
+	a {
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+	a:hover {
+		color: var(--text-link-hover);
+	}
+	.current {
+		color: var(--text-strong);
+		font-weight: 500;
+	}
+</style>

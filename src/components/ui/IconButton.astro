@@ -1,0 +1,110 @@
+---
+import Icon from "./Icon.astro";
+import type { IconName } from "./icons";
+
+interface Props {
+	icon: IconName;
+	label: string;
+	variant?: "ghost" | "outline" | "brand" | "onDark";
+	size?: "md" | "lg";
+	href?: string;
+	disabled?: boolean;
+	external?: boolean;
+	class?: string;
+	[key: string]: any;
+}
+
+const {
+	icon,
+	label,
+	variant = "ghost",
+	size = "md",
+	href,
+	disabled = false,
+	external = false,
+	class: className,
+	...rest
+} = Astro.props;
+
+const iconSize = size === "lg" ? 24 : 20;
+const classes = ["icon-btn", `icon-btn--${variant}`, `icon-btn--${size}`, className];
+---
+
+{
+	href && !disabled ? (
+		<a
+			href={href}
+			aria-label={label}
+			title={label}
+			class:list={classes}
+			target={external ? "_blank" : undefined}
+			rel={external ? "noopener noreferrer" : undefined}
+			{...rest}
+		>
+			<Icon name={icon} size={iconSize} />
+		</a>
+	) : (
+		<button type="button" aria-label={label} title={label} class:list={classes} disabled={disabled} {...rest}>
+			<Icon name={icon} size={iconSize} />
+		</button>
+	)
+}
+
+<style>
+	.icon-btn {
+		width: 44px;
+		height: 44px;
+		border-radius: var(--radius-round);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		cursor: pointer;
+		box-sizing: border-box;
+		text-decoration: none;
+		border: 1px solid transparent;
+		transition: background var(--dur-fast) var(--ease-out);
+	}
+	.icon-btn--lg {
+		width: 52px;
+		height: 52px;
+	}
+	.icon-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+	.icon-btn--ghost {
+		background: transparent;
+		color: var(--icon-default);
+	}
+	.icon-btn--ghost:hover:not(:disabled) {
+		background: var(--bg-muted);
+		color: var(--icon-default);
+	}
+	.icon-btn--outline {
+		background: var(--surface-card);
+		color: var(--navy-700);
+		border-color: var(--border-default);
+	}
+	.icon-btn--outline:hover:not(:disabled) {
+		background: var(--navy-50);
+		color: var(--navy-700);
+	}
+	.icon-btn--brand {
+		background: var(--teal-50);
+		color: var(--teal-700);
+	}
+	.icon-btn--brand:hover {
+		background: var(--teal-100);
+		color: var(--teal-700);
+	}
+	.icon-btn--onDark {
+		background: transparent;
+		color: #fff;
+		border-color: rgba(255, 255, 255, 0.6);
+	}
+	.icon-btn--onDark:hover {
+		background: rgba(255, 255, 255, 0.18);
+		color: #fff;
+	}
+</style>

@@ -1,6 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
 
 const groups = [
 	"Azione Cattolica",
@@ -31,23 +33,68 @@ const groups = [
 	title="Gruppi e attività"
 	description="I gruppi, i cori e le attività della comunità della Parrocchia Santa Maria Addolorata."
 >
-	<Container class="py-12">
-		<h1 class="text-3xl font-bold mb-2">Gruppi e attività</h1>
-		<p class="text-base-content/70 mb-10">
-			La vita della parrocchia è animata da tanti gruppi e attività, aperti a chiunque voglia
-			partecipare.
-		</p>
+	<Container class="page-top">
+		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info", href: "/info" }, { label: "Gruppi e attività" }]} />
+		<div class="heading">
+			<SectionHeading
+				as="h1"
+				size="lg"
+				title="Gruppi e attività"
+				description="La vita della parrocchia è animata da tanti gruppi e attività, aperti a chiunque voglia partecipare."
+			/>
+		</div>
 
-		<ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+		<ul class="groups">
 			{
 				groups.map((group) => (
-					<li class="card bg-base-200">
-						<div class="card-body py-4 px-5">
-							<span class="font-medium">{group}</span>
-						</div>
+					<li class="panel group">
+						<span class="group__dot" />
+						<span class="group__name">{group}</span>
 					</li>
 				))
 			}
 		</ul>
+		<p class="groups-note">
+			Per conoscere un gruppo o iniziare a partecipare potete <a href="/info/contatti">contattare la segreteria parrocchiale</a>.
+		</p>
 	</Container>
 </Layout>
+
+<style>
+	.heading {
+		margin-top: 24px;
+	}
+	.groups {
+		list-style: none;
+		margin: 32px 0 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+		gap: 16px;
+	}
+	.group {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 18px 22px;
+	}
+	.group__dot {
+		flex: none;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--teal-500);
+	}
+	.group__name {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 19px;
+		line-height: 1.25;
+		color: var(--text-strong);
+	}
+	.groups-note {
+		margin: 32px 0 0;
+		font-size: 16px;
+		color: var(--text-muted);
+	}
+</style>

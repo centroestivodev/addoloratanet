@@ -1,0 +1,44 @@
+---
+interface Props {
+	tone?: "neutral" | "brand" | "navy" | "accent";
+}
+
+const { tone = "neutral" } = Astro.props;
+---
+
+<span class:list={["badge-ds", `badge-ds--${tone}`]}><slot /></span>
+
+<style>
+	.badge-ds {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		height: 24px;
+		padding: 0 10px;
+		border-radius: var(--radius-pill);
+		font-family: var(--font-sans);
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		line-height: 1;
+		white-space: nowrap;
+		border: 1px solid transparent;
+		box-sizing: border-box;
+	}
+	.badge-ds--neutral {
+		background: var(--stone-100);
+		color: var(--ink-700);
+	}
+	.badge-ds--brand {
+		background: var(--teal-50);
+		color: var(--teal-800);
+	}
+	.badge-ds--navy {
+		background: var(--navy-50);
+		color: var(--navy-700);
+	}
+	.badge-ds--accent {
+		background: var(--ochre-50);
+		color: var(--ochre-800);
+	}
+</style>
