@@ -10,18 +10,18 @@ import TextLink from "../components/ui/TextLink.astro";
 import DateBadge from "../components/ui/DateBadge.astro";
 import { Image } from "astro:assets";
 import heroImage from "../assets/images/hero/01.jpeg";
-import { sanityClient } from "sanity:client";
+import { setCdnCache } from "../lib/cache";
+import { sanityClient } from "../sanity/lib/client";
 import { urlFor } from "../sanity/lib/image";
 import { formatCardTime, formatWhenShort, todayInRome } from "../sanity/lib/eventDate";
-import { EVENT_CARD_FIELDS, POST_CARD_FIELDS, type EventCard, type PostCard } from "../sanity/lib/queries";
+import { EVENT_CARD_FIELDS, POST_CARD_FIELDS, PUBLISHED_POST, type EventCard, type PostCard } from "../sanity/lib/queries";
 import { massPeriodFor, socials } from "../data/parish";
 
 // Pagina generata a ogni richiesta: "oggi" è la data della visita, non della build.
 export const prerender = false;
 
-// Netlify tiene in cache la pagina per 5 minuti, così non si interroga Sanity a ogni visita
-Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+// Netlify tiene in cache la pagina, così non si interroga Sanity a ogni visita
+setCdnCache(Astro.response.headers);
 
 const today = todayInRome();
 
@@ -30,7 +30,7 @@ const { events, posts } = await sanityClient.fetch<{ events: EventCard[]; posts:
 	`{
 		"events": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
 			| order(eventDate asc, startTime asc)[0...6]{ ${EVENT_CARD_FIELDS} },
-		"posts": *[_type == "post" && defined(slug.current)]
+		"posts": *[_type == "post" && defined(slug.current) && ${PUBLISHED_POST}]
 			| order(coalesce(publishedAt, _createdAt) desc)[0...5]{ ${POST_CARD_FIELDS} }
 	}`,
 	{ today },

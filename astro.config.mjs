@@ -7,6 +7,7 @@ import react from "@astrojs/react";
 import vue from "@astrojs/vue";
 import netlify from "@astrojs/netlify";
 import { rm } from "node:fs/promises";
+import { dataset, projectId } from "./src/sanity/env";
 
 // Il FantaSantiago esiste solo in sviluppo (`npm run dev`): la pagina non entra
 // nella build e le foto dei partecipanti (public/avatars) vengono tolte dall'output
@@ -36,6 +37,8 @@ const fantasantiagoSoloInDev = {
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://addolorata.net',
+
   vite: {
       plugins: [tailwindcss()]
 	},
@@ -43,8 +46,8 @@ export default defineConfig({
   adapter: netlify(),
 
   integrations: [sanity({
-	projectId: 'bomj2fjw',
-	dataset: 'addoloratanet',
+	projectId,
+	dataset,
 	useCdn: false,
 	studioBasePath: '/admin'
   }), react(), vue(), fantasantiagoSoloInDev]

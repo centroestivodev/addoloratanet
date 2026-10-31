@@ -10,18 +10,18 @@ import Icon from "../../components/ui/Icon.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import TagDot from "../../components/ui/TagDot.astro";
 import TextLink from "../../components/ui/TextLink.astro";
-import { sanityClient } from "sanity:client";
+import { notFoundResponse, setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
 import { urlFor } from "../../sanity/lib/image";
 import { truncate } from "../../sanity/lib/text";
 import { toPlainText } from "../../sanity/lib/portableText";
 import { dayInRome, formatDay, formatTimeLong, formatWhenLong, todayInRome } from "../../sanity/lib/eventDate";
-import { EVENT_CARD_FIELDS, PARROCO_BADGE, TAG_FIELDS, type EventCard } from "../../sanity/lib/queries";
+import { EVENT_CARD_FIELDS, PARROCO_BADGE, PUBLISHED_POST, TAG_FIELDS, type EventCard } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta: gli appuntamenti suggeriti dipendono da oggi
 export const prerender = false;
 
-Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+setCdnCache(Astro.response.headers);
 
 const { slug } = Astro.params;
 const today = todayInRome();
@@ -29,7 +29,7 @@ const today = todayInRome();
 const event = await sanityClient.fetch(
 	`*[_type == "event" && slug.current == $slug][0]{
 		${EVENT_CARD_FIELDS},
-		"relatedPost": relatedPost->{
+		"relatedPost": *[_type == "post" && _id == ^.relatedPost._ref && ${PUBLISHED_POST}][0]{
 			_id, title, "slug": slug.current, badge, body, "cover": images[0],
 			"publishedAt": coalesce(publishedAt, _createdAt),
 			"tags": tags[]->{ ${TAG_FIELDS} }
@@ -44,7 +44,7 @@ const event = await sanityClient.fetch(
 );
 
 if (!event) {
-	return Astro.redirect("/eventi");
+	return notFoundResponse();
 }
 
 const siblings: EventCard[] = event.siblings ?? [];

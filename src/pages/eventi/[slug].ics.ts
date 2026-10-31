@@ -1,5 +1,6 @@
 import type {APIRoute} from 'astro'
-import {sanityClient} from 'sanity:client'
+import {setCdnCache, setNotFoundCache} from '../../lib/cache'
+import {sanityClient} from '../../sanity/lib/client'
 
 // File .ics dell'evento, per aggiungerlo al calendario del telefono o del computer
 export const prerender = false
@@ -17,7 +18,11 @@ export const GET: APIRoute = async ({params, site, url}) => {
     `*[_type == "event" && slug.current == $slug][0]{ title, description, eventDate, startTime, endDate, endTime }`,
     {slug: params.slug},
   )
-  if (!event) return new Response('Evento non trovato', {status: 404})
+  if (!event) {
+    const headers = new Headers()
+    setNotFoundCache(headers)
+    return new Response('Evento non trovato', {status: 404, headers})
+  }
 
   const last = event.endDate || event.eventDate
   const lines = [
@@ -43,12 +48,10 @@ export const GET: APIRoute = async ({params, site, url}) => {
     'END:VCALENDAR',
   )
 
-  return new Response(lines.join('\r\n'), {
-    headers: {
-      'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${params.slug}.ics"`,
-      'Cache-Control': 'public, max-age=0, must-revalidate',
-      'Netlify-CDN-Cache-Control': 'public, durable, s-maxage=300, stale-while-revalidate=3600',
-    },
+  const headers = new Headers({
+    'Content-Type': 'text/calendar; charset=utf-8',
+    'Content-Disposition': `attachment; filename="${params.slug}.ics"`,
   })
+  setCdnCache(headers)
+  return new Response(lines.join('\r\n'), {headers})
 }

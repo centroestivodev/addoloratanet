@@ -5,14 +5,14 @@ import NewsCard from "../../components/NewsCard.astro";
 import Pager from "../../components/Pager.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import Tabs from "../../components/ui/Tabs.astro";
-import { sanityClient } from "sanity:client";
-import { PARROCO_BADGE, POST_CARD_FIELDS, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
+import { setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
+import { PARROCO_BADGE, POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta: filtro e pagina arrivano dall'indirizzo (?tag=…&pagina=…&per=…)
 export const prerender = false;
 
-Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+setCdnCache(Astro.response.headers);
 
 const PER_PAGE_OPTIONS = [5, 10, 20];
 const params = Astro.url.searchParams;
@@ -23,7 +23,7 @@ const requestedPage = Math.max(1, Math.floor(Number(params.get("pagina")) || 1))
 
 // Solo i tag usati da almeno una notizia
 const tags = await sanityClient.fetch<Tag[]>(
-	`*[_type == "tag" && defined(slug.current) && count(*[_type == "post" && references(^._id)]) > 0] | order(name asc){ ${TAG_FIELDS} }`,
+	`*[_type == "tag" && defined(slug.current) && count(*[_type == "post" && ${PUBLISHED_POST} && references(^._id)]) > 0] | order(name asc){ ${TAG_FIELDS} }`,
 );
 
 const filterQuery =
@@ -31,7 +31,7 @@ const filterQuery =
 const queryParams = { badge: PARROCO_BADGE, tagSlug: filter };
 
 const total = await sanityClient.fetch<number>(
-	`count(*[_type == "post" && defined(slug.current) ${filterQuery}])`,
+	`count(*[_type == "post" && defined(slug.current) && ${PUBLISHED_POST} ${filterQuery}])`,
 	queryParams,
 );
 const pages = Math.max(1, Math.ceil(total / perPage));
@@ -39,7 +39,7 @@ const page = Math.min(requestedPage, pages);
 const start = (page - 1) * perPage;
 
 const posts = await sanityClient.fetch<PostCard[]>(
-	`*[_type == "post" && defined(slug.current) ${filterQuery}]
+	`*[_type == "post" && defined(slug.current) && ${PUBLISHED_POST} ${filterQuery}]
 		| order(coalesce(publishedAt, _createdAt) desc)[$start...$end]{ ${POST_CARD_FIELDS} }`,
 	{ ...queryParams, start, end: start + perPage },
 );

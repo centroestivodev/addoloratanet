@@ -3,6 +3,13 @@ import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
 import Button from "../components/ui/Button.astro";
 import SectionHeading from "../components/ui/SectionHeading.astro";
+import { setNotFoundCache } from "../lib/cache";
+
+// Generata dalla function: una 404 prerenderizzata Astro la recupera via fetch, che in produzione
+// fallisce se l'host non è in security.allowedDomains, e la pagina uscirebbe vuota.
+export const prerender = false;
+
+setNotFoundCache(Astro.response.headers);
 ---
 
 <Layout title="Pagina non trovata" noindex>

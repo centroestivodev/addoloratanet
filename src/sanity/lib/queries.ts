@@ -27,6 +27,9 @@ export interface PostCard {
   tags?: Tag[]
 }
 
+// Una notizia con data futura resta nascosta finché non arriva il suo momento
+export const PUBLISHED_POST = `coalesce(publishedAt, _createdAt) <= now()`
+
 export const TAG_FIELDS = `name, "slug": slug.current, "color": color.hex`
 
 // I tag di un evento sono i suoi più quelli dell'articolo collegato

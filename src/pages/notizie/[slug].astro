@@ -8,7 +8,8 @@ import Badge from "../../components/ui/Badge.astro";
 import Icon from "../../components/ui/Icon.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import TextLink from "../../components/ui/TextLink.astro";
-import { sanityClient } from "sanity:client";
+import { notFoundResponse, setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
 import { urlFor } from "../../sanity/lib/image";
 import { toPlainText } from "../../sanity/lib/portableText";
 import {
@@ -18,20 +19,19 @@ import {
 	todayInRome,
 	type EventSchedule,
 } from "../../sanity/lib/eventDate";
-import { PARROCO_BADGE, POST_CARD_FIELDS, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
+import { PARROCO_BADGE, POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta, per separare gli incontri futuri da quelli già svolti
 export const prerender = false;
 
-Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+setCdnCache(Astro.response.headers);
 
 type LinkedEvent = EventSchedule & { _id: string; title: string; slug: string };
 
 const { slug } = Astro.params;
 
 const post = await sanityClient.fetch(
-	`*[_type == "post" && slug.current == $slug][0]{
+	`*[_type == "post" && slug.current == $slug && ${PUBLISHED_POST}][0]{
 		_id, title, images, body, badge,
 		"publishedAt": coalesce(publishedAt, _createdAt),
 		"tags": tags[]->{ ${TAG_FIELDS} },
@@ -39,14 +39,14 @@ const post = await sanityClient.fetch(
 		"events": *[_type == "event" && references(^._id) && defined(slug.current)] | order(eventDate asc, startTime asc){
 			_id, title, "slug": slug.current, eventDate, startTime, endDate, endTime
 		},
-		"others": *[_type == "post" && defined(slug.current) && slug.current != $slug]
+		"others": *[_type == "post" && defined(slug.current) && slug.current != $slug && ${PUBLISHED_POST}]
 			| order(coalesce(publishedAt, _createdAt) desc)[0...3]{ ${POST_CARD_FIELDS} }
 	}`,
 	{ slug },
 );
 
 if (!post) {
-	return Astro.redirect("/notizie");
+	return notFoundResponse();
 }
 
 const today = todayInRome();
