@@ -4,7 +4,8 @@ import Container from "../../components/Container.astro";
 import EventListItem from "../../components/EventListItem.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import Tabs from "../../components/ui/Tabs.astro";
-import { sanityClient } from "sanity:client";
+import { setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
 import { groupByMonth, todayInRome } from "../../sanity/lib/eventDate";
 import { EVENT_CARD_FIELDS, type EventCard, type Tag } from "../../sanity/lib/queries";
 
@@ -12,8 +13,7 @@ import { EVENT_CARD_FIELDS, type EventCard, type Tag } from "../../sanity/lib/qu
 // Vista e filtro arrivano dall'indirizzo: ?vista=passati&tag=…
 export const prerender = false;
 
-Astro.response.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-Astro.response.headers.set("Netlify-CDN-Cache-Control", "public, durable, s-maxage=300, stale-while-revalidate=3600");
+setCdnCache(Astro.response.headers);
 
 const params = Astro.url.searchParams;
 const past = params.get("vista") === "passati";
