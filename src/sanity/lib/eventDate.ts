@@ -168,6 +168,17 @@ export interface RecurringEvent {
   endTime?: string
 }
 
+// Orario scritto a mano: "9:00" oppure "09:00"
+export const isValidTime = (time: string) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(time)
+export const TIME_ERROR = "Scrivi l'orario come 9:00 o 17:30"
+
+const minutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+export const isTimeAfter = (time: string, other: string) => minutes(time) > minutes(other)
+
 export function occursOn(item: RecurringEvent, day: string): boolean {
   if (item.frequency === 'dates') return (item.dates ?? []).includes(day)
   if (toUtcDate(day).getUTCDay() !== item.weekday) return false
@@ -177,7 +188,7 @@ export function occursOn(item: RecurringEvent, day: string): boolean {
 }
 
 export function recurringOn(items: RecurringEvent[], day: string): RecurringEvent[] {
-  return items.filter((item) => occursOn(item, day)).sort((a, b) => a.startTime.localeCompare(b.startTime))
+  return items.filter((item) => occursOn(item, day)).sort((a, b) => minutes(a.startTime) - minutes(b.startTime))
 }
 
 export interface TodayItem {
@@ -185,11 +196,6 @@ export interface TodayItem {
   title: string
   time?: string
   href?: string
-}
-
-const minutes = (time: string) => {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
 }
 
 export const sortTimes = (times: string[]) => [...times].sort((a, b) => minutes(a) - minutes(b))

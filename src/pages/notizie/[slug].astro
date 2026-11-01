@@ -20,7 +20,7 @@ import {
 	todayInRome,
 	type EventSchedule,
 } from "../../sanity/lib/eventDate";
-import { PARROCO_BADGE, POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
+import { isParrocoPost, POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta, per separare gli incontri futuri da quelli già svolti
 export const prerender = false;
@@ -33,7 +33,7 @@ const { slug } = Astro.params;
 
 const post = await sanityClient.fetch(
 	`*[_type == "post" && slug.current == $slug && ${PUBLISHED_POST}][0]{
-		_id, title, images, body, badge,
+		_id, title, images, body,
 		"publishedAt": coalesce(publishedAt, _createdAt),
 		"tags": tags[]->{ ${TAG_FIELDS} },
 		"attachments": attachments[]{ title, "url": asset->url, "filename": asset->originalFilename, "size": asset->size, "extension": asset->extension },
@@ -80,7 +80,7 @@ function attachmentMeta(file: (typeof attachments)[number]) {
 			<TextLink href="/notizie" arrow="left">Avvisi e notizie</TextLink>
 			<div class="post-head">
 				<div class="post-head__meta">
-					{post.badge === PARROCO_BADGE && <Badge tone="navy">Comunicazione del parroco</Badge>}
+					{isParrocoPost(post) && <Badge tone="navy">Comunicazione del parroco</Badge>}
 					<span>{formatDateTimeLong(post.publishedAt)}</span>
 				</div>
 				<h1>{post.title}</h1>

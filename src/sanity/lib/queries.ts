@@ -20,34 +20,38 @@ export interface PostCard {
   _id: string
   title: string
   slug: string
-  badge?: string
   publishedAt: string
   cover?: any
   body?: any[]
   tags?: Tag[]
 }
 
+// Il tag delle comunicazioni del parroco si riconosce dallo slug e si mostra in evidenza
+export const PARROCO_TAG = 'comunicazione-del-parroco'
+
+export const isParrocoPost = (post: {tags?: (Tag | null)[] | null}) =>
+  post.tags?.some((tag) => tag?.slug === PARROCO_TAG) ?? false
+
 // Una notizia con data futura resta nascosta finché non arriva il suo momento
 export const PUBLISHED_POST = `coalesce(publishedAt, _createdAt) <= now()`
 
 export const TAG_FIELDS = `name, "slug": slug.current, "color": color.hex`
 
-// I tag di un evento sono i suoi più quelli dell'articolo collegato
+// I tag di un evento sono i suoi più quelli dell'articolo collegato, tranne quello del parroco
+// che riguarda la notizia e non l'evento
 export const EVENT_CARD_FIELDS = `
   _id, title, "slug": slug.current, description, image,
   "imageDimensions": image.asset->metadata.dimensions,
   eventDate, startTime, endDate, endTime,
-  "tags": *[_type == "tag" && (_id in coalesce(^.tags[]._ref, []) || _id in coalesce(^.relatedPost->tags[]._ref, []))] | order(name asc){ ${TAG_FIELDS} }
+  "tags": *[_type == "tag" && slug.current != "${PARROCO_TAG}" && (_id in coalesce(^.tags[]._ref, []) || _id in coalesce(^.relatedPost->tags[]._ref, []))] | order(name asc){ ${TAG_FIELDS} }
 `
 
 export const POST_CARD_FIELDS = `
-  _id, title, "slug": slug.current, badge, body,
+  _id, title, "slug": slug.current, body,
   "publishedAt": coalesce(publishedAt, _createdAt),
   "cover": images[0],
   "tags": tags[]->{ ${TAG_FIELDS} }
 `
-
-export const PARROCO_BADGE = 'comunicazione-parroco'
 
 export const RECURRING_EVENTS = `*[_type == "recurringEvent"]{
   _id, title, frequency, weekday, dates, skippedDates, validFrom, validUntil, startTime, endTime
