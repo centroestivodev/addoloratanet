@@ -61,7 +61,7 @@ export default defineType({
       type: 'text',
       rows: 20,
       description:
-        "Scrivi ogni accordo tra parentesi quadre, subito prima della sillaba su cui cade: [Do]Alleluia, [Sol]canta il po[Lam]polo tuo. Lascia una riga vuota tra le strofe. Per dare un nome a una strofa: {c: Ritornello}. Per il ritornello, racchiudilo tra {soc} e {eoc}.",
+        "Scrivi ogni accordo tra parentesi quadre, subito prima della sillaba su cui cade: [Do]Alleluia, [Sol]canta il po[Lam]polo tuo. Lascia una riga vuota tra le strofe. Racchiudi il ritornello tra {soc} e {eoc}; quando si ripete, scrivi solo {chorus}. Per dare un nome a una strofa: {c: Finale}.",
       validation: (Rule) => [
         Rule.required(),
         Rule.custom((lyrics) => {
