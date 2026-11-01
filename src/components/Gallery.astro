@@ -1,0 +1,132 @@
+---
+// Galleria di foto: toccando una miniatura la foto si apre sopra la pagina.
+// Il link resta valido se il JavaScript non parte.
+import { urlFor } from "../sanity/lib/image";
+
+interface Props {
+	images: any[];
+}
+
+const { images } = Astro.props;
+---
+
+<div class="gallery" data-gallery>
+	{
+		images.map((img) => (
+			<a href={urlFor(img).width(2000).auto("format").url()}>
+				<img src={urlFor(img).width(600).height(450).auto("format").url()} width="600" height="450" alt={img.alt || ""} loading="lazy" decoding="async" />
+			</a>
+		))
+	}
+</div>
+
+<dialog class="lightbox" data-lightbox>
+	<button type="button" class="lightbox__close" aria-label="Chiudi">×</button>
+	<img alt="" data-lightbox-image />
+</dialog>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>("[data-lightbox]");
+	const image = document.querySelector<HTMLImageElement>("[data-lightbox-image]");
+
+	if (dialog && image) {
+		// history.back() non è immediato: finché non arriva popstate una nuova apertura aspetta il suo turno,
+		// altrimenti il ritorno in cronologia chiuderebbe la foto appena aperta
+		let backPending = false;
+		let queued: HTMLAnchorElement | undefined;
+
+		const open = (link: HTMLAnchorElement) => {
+			image.src = link.href;
+			image.alt = link.querySelector("img")?.alt ?? "";
+			dialog.showModal();
+			history.pushState({ lightbox: true }, "");
+		};
+		// Senza src la prossima apertura non mostra la foto precedente mentre carica la nuova
+		const hide = () => {
+			dialog.close();
+			image.removeAttribute("src");
+		};
+		const close = () => {
+			if (!dialog.open) return;
+			hide();
+			backPending = true;
+			history.back();
+		};
+
+		document.querySelectorAll<HTMLAnchorElement>("[data-gallery] a").forEach((link) => {
+			link.addEventListener("click", (event) => {
+				event.preventDefault();
+				if (dialog.open) return;
+				if (backPending) queued = link;
+				else open(link);
+			});
+		});
+
+		dialog.addEventListener("click", close);
+		dialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			close();
+		});
+
+		// Il tasto indietro del telefono chiude la foto invece di lasciare la pagina
+		window.addEventListener("popstate", () => {
+			if (backPending) {
+				backPending = false;
+				if (queued) open(queued);
+				queued = undefined;
+			} else if (dialog.open) {
+				hide();
+			}
+		});
+	}
+</script>
+
+<style>
+	.gallery {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+		gap: 12px;
+	}
+	.gallery img {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+		border-radius: var(--radius-md);
+	}
+	.lightbox {
+		width: 100vw;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: rgb(0 0 0 / 0.92);
+	}
+	.lightbox[open] {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.lightbox img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+	.lightbox__close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		width: 44px;
+		height: 44px;
+		border: 0;
+		border-radius: 50%;
+		background: rgb(255 255 255 / 0.15);
+		color: #fff;
+		font-size: 28px;
+		line-height: 1;
+		cursor: pointer;
+	}
+</style>

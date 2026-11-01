@@ -1,0 +1,81 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import SongSheet from "../../components/SongSheet.astro";
+import TextLink from "../../components/ui/TextLink.astro";
+import { songText } from "../../lib/chordpro";
+import { notFoundResponse, setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
+import { truncate } from "../../sanity/lib/text";
+import { SONG_FIELDS, type Song } from "../../sanity/lib/queries";
+
+export const prerender = false;
+
+setCdnCache(Astro.response.headers);
+
+const { slug } = Astro.params;
+
+const song = await sanityClient.fetch<Song | null>(`*[_type == "song" && slug.current == $slug][0]{ ${SONG_FIELDS} }`, { slug });
+
+if (!song) {
+	return notFoundResponse();
+}
+---
+
+<Layout title={song.title} description={truncate(songText(song.lyrics ?? "").replace(/\n/g, " "), 160)}>
+	<Container class="page-top" width={880}>
+		<TextLink href="/canti" arrow="left">Canti</TextLink>
+		<h1>{song.title}</h1>
+		{song.author && <p class="song-author">{song.author}</p>}
+		{
+			song.categories.length > 0 && (
+				<div class="song-categories">
+					{song.categories.map((c) => <a href={`/canti?categoria=${c.slug}`}>{c.name}</a>)}
+				</div>
+			)
+		}
+		<div class="song-body">
+			<SongSheet lyrics={song.lyrics ?? ""} />
+		</div>
+	</Container>
+</Layout>
+
+<style>
+	h1 {
+		margin: 24px 0 0;
+		font: var(--type-h1);
+		letter-spacing: var(--ls-tight);
+		color: var(--text-strong);
+	}
+	.song-author {
+		margin: 8px 0 0;
+		color: var(--text-muted);
+	}
+	.song-categories {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 14px;
+	}
+	.song-categories a {
+		display: inline-flex;
+		align-items: center;
+		height: 32px;
+		padding: 0 13px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-body);
+		text-decoration: none;
+	}
+	.song-categories a:hover {
+		border-color: var(--border-strong);
+		background: var(--bg-sunken);
+		color: var(--text-body);
+	}
+	.song-body {
+		margin-top: 28px;
+	}
+</style>

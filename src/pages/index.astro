@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
 import NewsCard from "../components/NewsCard.astro";
 import EventCardRow from "../components/EventCard.astro";
+import TodayInParish from "../components/TodayInParish.astro";
 import Icon from "../components/ui/Icon.astro";
 import IconButton from "../components/ui/IconButton.astro";
 import SectionHeading from "../components/ui/SectionHeading.astro";
@@ -13,8 +14,19 @@ import heroImage from "../assets/images/hero/01.jpeg";
 import { setCdnCache } from "../lib/cache";
 import { sanityClient } from "../sanity/lib/client";
 import { urlFor } from "../sanity/lib/image";
-import { formatCardTime, formatWhenShort, todayInRome } from "../sanity/lib/eventDate";
-import { EVENT_CARD_FIELDS, POST_CARD_FIELDS, PUBLISHED_POST, type EventCard, type PostCard } from "../sanity/lib/queries";
+import { formatCardTime, formatWhenShort, sortTimes, todayInRome, todayItems, type RecurringEvent } from "../sanity/lib/eventDate";
+import {
+	EVENT_CARD_FIELDS,
+	EVENT_TODAY_FIELDS,
+	MASS_SPECIAL_DAY_FIELDS,
+	POST_CARD_FIELDS,
+	PUBLISHED_POST,
+	RECURRING_EVENTS,
+	type EventCard,
+	type EventToday,
+	type MassSpecialDay,
+	type PostCard,
+} from "../sanity/lib/queries";
 import { massPeriodFor, socials } from "../data/parish";
 
 // Pagina generata a ogni richiesta: "oggi" è la data della visita, non della build.
@@ -26,12 +38,21 @@ setCdnCache(Astro.response.headers);
 const today = todayInRome();
 
 // Prossimi eventi (compresi quelli di più giorni ancora in corso) e ultime notizie
-const { events, posts } = await sanityClient.fetch<{ events: EventCard[]; posts: PostCard[] }>(
+const { events, eventsToday, posts, recurring, specialDay } = await sanityClient.fetch<{
+	events: EventCard[];
+	eventsToday: EventToday[];
+	posts: PostCard[];
+	recurring: RecurringEvent[];
+	specialDay: MassSpecialDay | null;
+}>(
 	`{
 		"events": *[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
 			| order(eventDate asc, startTime asc)[0...6]{ ${EVENT_CARD_FIELDS} },
 		"posts": *[_type == "post" && defined(slug.current) && ${PUBLISHED_POST}]
-			| order(coalesce(publishedAt, _createdAt) desc)[0...5]{ ${POST_CARD_FIELDS} }
+			| order(coalesce(publishedAt, _createdAt) desc)[0...5]{ ${POST_CARD_FIELDS} },
+		"eventsToday": *[_type == "event" && defined(slug.current) && eventDate <= $today && coalesce(endDate, eventDate) >= $today]{ ${EVENT_TODAY_FIELDS} },
+		"recurring": ${RECURRING_EVENTS},
+		"specialDay": *[_type == "massSpecialDay" && date == $today] | order(_updatedAt desc)[0]{ ${MASS_SPECIAL_DAY_FIELDS} }
 	}`,
 	{ today },
 );
@@ -41,18 +62,18 @@ const others = events.slice(2, 6);
 const newsBig = posts.slice(0, 2);
 const newsSmall = posts.slice(2, 5);
 
-// SS. Messe di oggi, secondo il periodo dell'anno
+// Sante Messe di oggi: quelle del giorno speciale, se c'è, altrimenti secondo il periodo dell'anno
 const [y, m, d] = today.split("-").map(Number);
 const todayDate = new Date(Date.UTC(y, m - 1, d));
 const period = massPeriodFor(m);
 const isSunday = todayDate.getUTCDay() === 0;
-const todayTimes = isSunday ? period.festive : period.feriali;
+const todayTimes = specialDay ? sortTimes(specialDay.times) : isSunday ? period.festive : period.feriali;
 const todayLabel = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(todayDate);
 
 const quickLinks = [
 	{ href: "/info/orari", icon: "clock", label: "Orari delle Messe", description: "Feriali e festivi" },
 	{ href: "/eventi", icon: "calendar-days", label: "Calendario", description: "Incontri, feste, percorsi" },
-	{ href: "/info/dove-siamo", icon: "map-pin", label: "Dove siamo", description: "V.le della Venezia Giulia 134" },
+	{ href: "/info/dove-siamo", icon: "map-pin", label: "Dove siamo", description: "Viale della Venezia Giulia 134" },
 ] as const;
 
 // Le locandine verticali si mostrano intere, le foto si ritagliano
@@ -85,10 +106,11 @@ function featuredImage(event: EventCard) {
 		<div class="hero__content">
 			<SectionHeading as="h1" size="xl" onDark align="center" eyebrow="Benvenuti" title="Parrocchia" accent="Santa Maria Addolorata" />
 			<div class="hero__today">
-				<span class="hero__today-label">SS. Messe di oggi, {todayLabel}</span>
+				<span class="hero__today-label">Sante Messe di oggi, {todayLabel}</span>
 				<div class="hero__times">
 					{todayTimes.map((t) => <span>{t}</span>)}
 				</div>
+				{specialDay?.note && <span class="hero__today-note">{specialDay.note}</span>}
 				<TextLink href="/info/orari" tone="onDark">Tutti gli orari</TextLink>
 			</div>
 		</div>
@@ -108,6 +130,9 @@ function featuredImage(event: EventCard) {
 				))
 			}
 		</nav>
+		<div class="recurring-today-wrap">
+			<TodayInParish items={todayItems(recurring, eventsToday, today)} />
+		</div>
 	</div>
 
 	{
@@ -266,6 +291,10 @@ function featuredImage(event: EventCard) {
 		font-size: 15px;
 		font-weight: 600;
 	}
+	.hero__today-note {
+		font-size: 15px;
+		font-style: italic;
+	}
 	.hero__times {
 		display: flex;
 		flex-wrap: wrap;
@@ -355,6 +384,9 @@ function featuredImage(event: EventCard) {
 		}
 	}
 
+	.recurring-today-wrap {
+		margin-top: 12px;
+	}
 	:global(.home-section) {
 		margin-top: var(--section-gap);
 	}

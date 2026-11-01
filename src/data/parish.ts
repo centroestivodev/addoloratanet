@@ -1,7 +1,7 @@
 import type { IconName } from "../components/ui/icons";
 
-export const address = "V.le della Venezia Giulia 134, 00177 Roma";
-export const addressLines = ["V.le della Venezia Giulia 134", "00177 Roma"];
+export const address = "Viale della Venezia Giulia 134, 00177 Roma";
+export const addressLines = ["Viale della Venezia Giulia 134", "00177 Roma"];
 export const neighbourhood = "Prenestino-Labicano";
 
 export const coordinates = { lat: 41.897757, lon: 12.560785 };
@@ -24,7 +24,7 @@ export const socials: { name: string; href: string; icon: IconName }[] = [
 	{ name: "Twitter", href: "https://twitter.com/smaddolorata", icon: "twitter" },
 ];
 
-// Orari delle SS. Messe nei periodi dell'anno. `months` sono i mesi (1-12) del periodo.
+// Orari delle Sante Messe nei periodi dell'anno. `months` sono i mesi (1-12) del periodo.
 export const massPeriods = [
 	{
 		id: "inverno",

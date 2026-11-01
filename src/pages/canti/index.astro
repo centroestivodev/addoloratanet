@@ -1,0 +1,71 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import SongList from "../../components/SongList.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import Tabs from "../../components/ui/Tabs.astro";
+import { setCdnCache } from "../../lib/cache";
+import { sanityClient } from "../../sanity/lib/client";
+import { SONG_CATEGORY_FIELDS, SONG_FIELDS, type Song, type SongCategory } from "../../sanity/lib/queries";
+
+// Pagina generata a ogni richiesta; la categoria arriva dall'indirizzo: ?categoria=…
+export const prerender = false;
+
+setCdnCache(Astro.response.headers);
+
+const filter = Astro.url.searchParams.get("categoria") || "tutti";
+
+const { songs, categories } = await sanityClient.fetch<{ songs: Song[]; categories: SongCategory[] }>(
+	`{
+		"songs": *[_type == "song" && defined(slug.current)] | order(lower(title) asc){ ${SONG_FIELDS} },
+		"categories": *[_type == "songCategory" && defined(slug.current)
+			&& count(*[_type == "song" && references(^._id)]) > 0] | order(order asc, name asc){ ${SONG_CATEGORY_FIELDS} }
+	}`,
+);
+
+const visible = filter === "tutti" ? songs : songs.filter((s) => s.categories.some((c) => c.slug === filter));
+const tabs = [{ slug: "tutti", name: "Tutti" }, ...categories].map((c) => ({
+	label: c.name,
+	href: c.slug === "tutti" ? "/canti" : `/canti?categoria=${c.slug}`,
+	active: c.slug === filter,
+}));
+---
+
+<Layout title="Canti" description="I canti della Parrocchia Santa Maria Addolorata, con testo e accordi per la chitarra.">
+	<Container class="page-top" width={880}>
+		<SectionHeading as="h1" size="lg" title="Canti" description="Testi e accordi per la chitarra." />
+		{
+			tabs.length > 1 && (
+				<div class="tabs-scroll">
+					<Tabs variant="underline" label="Filtra per categoria" items={tabs} />
+				</div>
+			)
+		}
+		<div class="songs">
+			{songs.length === 0 ? <p class="songs__empty">Stiamo raccogliendo i canti: torna a trovarci presto.</p> : <SongList songs={visible} />}
+		</div>
+	</Container>
+</Layout>
+
+<style>
+	.tabs-scroll {
+		margin: 24px calc(-1 * var(--container-pad)) 0;
+		padding: 0 var(--container-pad);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	@media (max-width: 639px) {
+		.tabs-scroll :global(.tabs-ds) {
+			flex-wrap: nowrap;
+			max-width: none;
+			min-width: 100%;
+		}
+	}
+	.songs {
+		margin-top: 24px;
+	}
+	.songs__empty {
+		margin: 0;
+		color: var(--text-muted);
+	}
+</style>

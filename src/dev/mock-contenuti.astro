@@ -1,0 +1,63 @@
+---
+// Pagina di prova, visibile solo in sviluppo: appuntamenti fissi e canti con dati
+// di esempio scritti qui, senza modificare nulla su Sanity.
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/Container.astro";
+import TodayInParish from "../components/TodayInParish.astro";
+import RecurringWeek from "../components/RecurringWeek.astro";
+import SongList from "../components/SongList.astro";
+import SongSheet from "../components/SongSheet.astro";
+import SectionHeading from "../components/ui/SectionHeading.astro";
+import { todayInRome, todayItems, type RecurringEvent } from "../sanity/lib/eventDate";
+import type { Song } from "../sanity/lib/queries";
+
+const today = todayInRome();
+const recurring: RecurringEvent[] = [
+	{ _id: "1", title: "Corso di teatro", frequency: "weekly", weekday: 5, startTime: "17:00" },
+	{ _id: "2", title: "ACR", frequency: "weekly", weekday: 6, startTime: "16:00" },
+	{ _id: "3", title: "LAB Giovani", frequency: "weekly", weekday: 6, startTime: "16:00" },
+	{ _id: "4", title: "Oratorio", frequency: "weekly", weekday: 0, startTime: "11:00", endTime: "12:40" },
+	{ _id: "5", title: "Combriccola", frequency: "dates", dates: [today], startTime: "16:30" },
+	{ _id: "6", title: "Saltato oggi: non deve comparire", frequency: "weekly", weekday: new Date(`${today}T12:00:00Z`).getUTCDay(), skippedDates: [today], startTime: "09:00" },
+];
+
+const lyrics = `{c: Strofa}
+[Do]Tu scendi dalle [Sol]stelle, o Re del [Do]cielo,
+e vieni in una [Sol]grotta al freddo e al [Do]gelo.
+
+{soc}
+{c: Ritornello}
+O Bambino [Fa]mio di[Do]vino,
+io ti vedo qui a tre[Sol7]mar,
+o Dio be[Do]ato!
+{eoc}
+
+Riga senza accordi
+[Lam/Do]Accordo a metà pa[Re7sus4]rola e [XYZ]sconosciuto`;
+
+const songs: Song[] = [
+	{ _id: "a", code: "k3x9qa", title: "Tu scendi dalle stelle", slug: "tu-scendi-dalle-stelle", author: "S. Alfonso Maria de' Liguori", lyrics, categories: [] },
+	{ _id: "b", code: "p7m2zd", title: "Più bella cosa", slug: "piu-bella-cosa", lyrics: "[Do]Città di pace e d'amore", categories: [] },
+	{ _id: "c", code: "s4nt0x", title: "Santo", slug: "santo", lyrics: "[Do]Santo, santo, santo", categories: [] },
+	{ _id: "d", code: "a11e1u", title: "Alleluia", slug: "alleluia", lyrics: "[Sol]Alleluia", categories: [] },
+];
+---
+
+<Layout title="Prova contenuti" description="Pagina di prova." noindex>
+	<Container class="page-top" width={880}>
+		<SectionHeading as="h1" size="lg" title="Prova contenuti" />
+		<div style="margin-top: 24px"><TodayInParish
+				items={todayItems(
+					recurring,
+					[
+						{ _id: "e1", title: "Commemorazione dei defunti al cimitero del Verano", slug: "prova", eventDate: today, startTime: "15:30" },
+						{ _id: "e2", title: "Ritiro di più giorni", slug: "prova-2", eventDate: "2026-01-01", endDate: today },
+					],
+					today,
+				)}
+			/></div>
+		<RecurringWeek items={recurring} today={today} />
+		<div style="margin-top: 40px"><SongList songs={songs} /></div>
+		<div style="margin-top: 40px"><SongSheet lyrics={lyrics} /></div>
+			</Container>
+</Layout>

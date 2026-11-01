@@ -48,3 +48,45 @@ export const POST_CARD_FIELDS = `
 `
 
 export const PARROCO_BADGE = 'comunicazione-parroco'
+
+export const RECURRING_EVENTS = `*[_type == "recurringEvent"]{
+  _id, title, frequency, weekday, dates, skippedDates, validFrom, validUntil, startTime, endTime
+}`
+
+export interface MassSpecialDay {
+  date: string
+  times: string[]
+  note?: string
+}
+
+export const MASS_SPECIAL_DAY_FIELDS = `date, times, note`
+
+export interface EventToday extends EventSchedule {
+  _id: string
+  title: string
+  slug: string
+}
+
+export const EVENT_TODAY_FIELDS = `_id, title, "slug": slug.current, eventDate, startTime, endDate, endTime`
+
+export interface SongCategory {
+  name: string
+  slug: string
+}
+
+export interface Song {
+  _id: string
+  title: string
+  slug: string
+  code?: string
+  author?: string
+  lyrics: string
+  categories: SongCategory[]
+}
+
+export const SONG_CATEGORY_FIELDS = `name, "slug": slug.current`
+
+export const SONG_FIELDS = `
+  _id, title, "slug": slug.current, "code": code.current, author, lyrics,
+  "categories": coalesce(categories[]->{ ${SONG_CATEGORY_FIELDS} }, [])
+`

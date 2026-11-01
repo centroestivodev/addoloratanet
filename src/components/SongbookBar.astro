@@ -1,0 +1,304 @@
+---
+// Riquadro sopra l'elenco dei canti: raccoglie i canti scelti con il + e li mette in ordine
+import Button from "./ui/Button.astro";
+import Icon from "./ui/Icon.astro";
+---
+
+<section class="book panel" aria-label="Il tuo libretto" data-book hidden>
+	<div class="book__bar">
+		<button type="button" class="book__toggle" aria-expanded="false" data-book-toggle>
+			<Icon name="book-open" size={18} />
+			<span data-book-count></span>
+			<span class="book__chevron" data-book-chevron><Icon name="chevron-down" size={16} /></span>
+		</button>
+		<Button href="/canti" data-book-open>Apri</Button>
+	</div>
+	<div class="book__list" data-book-panel hidden>
+		<ol data-book-list></ol>
+		<button type="button" class="book__clear" data-book-clear>Svuota il libretto</button>
+	</div>
+</section>
+
+<template data-book-row>
+	<li class="book__row">
+		<button type="button" class="book__handle" aria-label="Trascina per spostare, oppure usa le frecce su e giù" data-handle>
+			<Icon name="grip-vertical" size={18} />
+		</button>
+		<span class="book__title" data-title></span>
+		<button type="button" aria-label="Togli dal libretto" data-remove><Icon name="x" size={18} /></button>
+	</li>
+</template>
+
+<script>
+	import { bookUrl, loadBook, MAX_SONGS, saveBook } from "../lib/songbook";
+
+	const root = document.querySelector<HTMLElement>("[data-book]");
+	if (root) {
+		const panel = root.querySelector<HTMLElement>("[data-book-panel]")!;
+		const list = root.querySelector<HTMLElement>("[data-book-list]")!;
+		const toggle = root.querySelector<HTMLButtonElement>("[data-book-toggle]")!;
+		const chevron = root.querySelector<HTMLElement>("[data-book-chevron]")!;
+		const count = root.querySelector<HTMLElement>("[data-book-count]")!;
+		const open = root.querySelector<HTMLAnchorElement>("[data-book-open]")!;
+		const rowTemplate = document.querySelector<HTMLTemplateElement>("[data-book-row]")!;
+		const addButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-book-add]")];
+		let entries = loadBook();
+
+		const setPanel = (visible: boolean) => {
+			panel.hidden = !visible;
+			toggle.setAttribute("aria-expanded", String(visible));
+		};
+
+		const render = () => {
+			saveBook(entries);
+			const empty = entries.length === 0;
+			root.hidden = false;
+			if (empty) setPanel(false);
+			count.textContent = empty ? "Libretto: scegli i canti con il +" : entries.length === 1 ? "Libretto: 1 canto" : `Libretto: ${entries.length} canti`;
+			toggle.disabled = empty;
+			chevron.hidden = empty;
+			open.hidden = empty;
+			open.href = bookUrl(entries.map((e) => e.code));
+
+			list.replaceChildren(
+				...entries.map((entry) => {
+					const row = rowTemplate.content.cloneNode(true) as DocumentFragment;
+					row.querySelector("[data-title]")!.textContent = entry.title;
+					row.querySelector<HTMLElement>("li")!.dataset.code = entry.code;
+					return row;
+				}),
+			);
+
+			for (const button of addButtons) {
+				const added = entries.some((e) => e.code === button.dataset.code);
+				button.setAttribute("aria-pressed", String(added));
+				button.dataset.tooltip = added ? "Togli dal libretto" : "Aggiungi al libretto";
+				button.disabled = !added && entries.length >= MAX_SONGS;
+			}
+		};
+
+		for (const button of addButtons) {
+			button.addEventListener("click", () => {
+				const code = button.dataset.code!;
+				entries = entries.some((e) => e.code === code)
+					? entries.filter((e) => e.code !== code)
+					: [...entries, { code, title: button.dataset.title! }];
+				render();
+			});
+		}
+
+		toggle.addEventListener("click", () => setPanel(panel.hidden));
+
+		list.addEventListener("click", (event) => {
+			const button = (event.target as Element).closest<HTMLButtonElement>("[data-remove]");
+			if (!button) return;
+			const code = button.closest("li")!.dataset.code;
+			entries = entries.filter((e) => e.code !== code);
+			render();
+		});
+
+		// Trascinamento con il dito o il mouse: si spostano le righe vicine e non quella trascinata,
+		// che se uscisse dalla pagina anche solo per un attimo interromperebbe il gesto
+		list.addEventListener("pointerdown", (event) => {
+			const handle = (event.target as Element).closest<HTMLElement>("[data-handle]");
+			if (!handle) return;
+			event.preventDefault();
+			const row = handle.closest("li")!;
+			const pointer = event.pointerId;
+			handle.setPointerCapture(pointer);
+			row.classList.add("book__row--dragging");
+
+			// Posizione senza l'animazione in corso, altrimenti le righe si scambierebbero di nuovo
+			const middle = (el: HTMLElement) => list.getBoundingClientRect().top + el.offsetTop - list.offsetTop + el.offsetHeight / 2;
+
+			// Le due righe scambiate scivolano dal vecchio posto al nuovo
+			const slide = (el: HTMLElement, from: number) => {
+				if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+				el.animate([{ transform: `translateY(${from}px)` }, { transform: "none" }], { duration: 150, easing: "ease-out" });
+			};
+			const slidePair = (sibling: HTMLElement, direction: number) => {
+				slide(sibling, direction * row.offsetHeight);
+				slide(row, -direction * sibling.offsetHeight);
+			};
+
+			const move = (e: PointerEvent) => {
+				if (e.pointerId !== pointer) return;
+				let next = row.nextElementSibling as HTMLElement | null;
+				while (next && e.clientY > middle(next)) {
+					list.insertBefore(next, row);
+					slidePair(next, 1);
+					next = row.nextElementSibling as HTMLElement | null;
+				}
+				let previous = row.previousElementSibling as HTMLElement | null;
+				while (previous && e.clientY < middle(previous)) {
+					list.insertBefore(previous, row.nextElementSibling);
+					slidePair(previous, -1);
+					previous = row.previousElementSibling as HTMLElement | null;
+				}
+				// Vicino ai bordi di un elenco lungo, lo fa scorrere
+				const box = panel.getBoundingClientRect();
+				if (e.clientY < box.top + 32) panel.scrollTop -= 12;
+				else if (e.clientY > box.bottom - 32) panel.scrollTop += 12;
+			};
+
+			const end = (e: PointerEvent) => {
+				if (e.pointerId !== pointer) return;
+				handle.removeEventListener("pointermove", move);
+				handle.removeEventListener("pointerup", end);
+				handle.removeEventListener("pointercancel", end);
+				const order = [...list.children].map((li) => (li as HTMLElement).dataset.code);
+				entries = order.flatMap((code) => entries.find((entry) => entry.code === code) ?? []);
+				render();
+			};
+
+			handle.addEventListener("pointermove", move);
+			handle.addEventListener("pointerup", end);
+			handle.addEventListener("pointercancel", end);
+		});
+
+		// Da tastiera la maniglia sposta la riga con le frecce
+		list.addEventListener("keydown", (event) => {
+			const handle = (event.target as Element).closest<HTMLElement>("[data-handle]");
+			if (!handle || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+			event.preventDefault();
+			const code = handle.closest("li")!.dataset.code!;
+			const index = entries.findIndex((e) => e.code === code);
+			const target = index + (event.key === "ArrowUp" ? -1 : 1);
+			if (target < 0 || target >= entries.length) return;
+			[entries[index], entries[target]] = [entries[target], entries[index]];
+			render();
+			list.querySelector<HTMLElement>(`[data-code="${code}"] [data-handle]`)!.focus();
+		});
+
+		root.querySelector("[data-book-clear]")!.addEventListener("click", () => {
+			entries = [];
+			render();
+		});
+
+		render();
+	}
+</script>
+
+<style>
+	/* Resta visibile sotto la barra del sito mentre si scorre l'elenco e si scelgono i canti */
+	.book {
+		position: sticky;
+		top: calc(var(--header-height) + 8px);
+		z-index: 5;
+		margin-bottom: 12px;
+		padding: 6px 10px 6px 16px;
+		box-shadow: var(--shadow-md);
+	}
+	.book[hidden],
+	.book__list[hidden],
+	.book__chevron[hidden],
+	.book__bar :global([hidden]) {
+		display: none;
+	}
+	.book__bar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	.book__toggle {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 44px;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-weight: 600;
+		color: var(--text-strong);
+		text-align: left;
+		cursor: pointer;
+	}
+	.book__toggle:disabled {
+		font-weight: 500;
+		color: var(--text-muted);
+		cursor: default;
+	}
+	.book__chevron {
+		display: flex;
+		transition: transform var(--dur-fast) var(--ease-out);
+	}
+	.book__toggle[aria-expanded="true"] .book__chevron {
+		transform: rotate(180deg);
+	}
+	.book__list {
+		max-height: 45vh;
+		overflow-y: auto;
+		margin-top: 6px;
+		padding-top: 6px;
+		border-top: 1px solid var(--border-subtle);
+	}
+	.book__list ol {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		counter-reset: canto;
+	}
+	.book__row {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		border-radius: var(--radius-md);
+		counter-increment: canto;
+	}
+	.book__row--dragging {
+		position: relative;
+		z-index: 1;
+		background: var(--bg-sunken);
+		box-shadow: var(--shadow-sm);
+	}
+	.book__title {
+		flex: 1;
+		min-width: 0;
+		padding-right: 6px;
+		font-size: 15px;
+		color: var(--text-strong);
+	}
+	.book__title::before {
+		content: counter(canto) ". ";
+		color: var(--text-muted);
+	}
+	.book__row button {
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border: 0;
+		border-radius: var(--radius-pill);
+		background: none;
+		color: var(--text-body);
+		cursor: pointer;
+	}
+	.book__row button:hover {
+		background: var(--bg-sunken);
+	}
+	/* Sulla maniglia il dito trascina la riga invece di far scorrere la pagina */
+	.book__row .book__handle {
+		color: var(--text-subtle);
+		cursor: grab;
+		touch-action: none;
+	}
+	.book__row--dragging .book__handle {
+		cursor: grabbing;
+	}
+	.book__clear {
+		margin: 6px 0;
+		padding: 6px 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: 14px;
+		color: var(--text-muted);
+		text-decoration: underline;
+		cursor: pointer;
+	}
+</style>

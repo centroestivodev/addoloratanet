@@ -1,0 +1,91 @@
+---
+// Riquadro della home con gli appuntamenti fissi e gli eventi di oggi; se non c'è nulla non compare
+import TextLink from "./ui/TextLink.astro";
+import type { TodayItem } from "../sanity/lib/eventDate";
+
+interface Props {
+	items: TodayItem[];
+}
+
+const { items } = Astro.props;
+---
+
+{
+	items.length > 0 && (
+		<section class="today panel" aria-label="Oggi in parrocchia">
+			<div class="today__head">
+				<span class="eyebrow">Oggi in parrocchia</span>
+				<TextLink href="/eventi#appuntamenti-fissi">Tutta la settimana</TextLink>
+			</div>
+			<ul>
+				{items.map((item) => (
+					<li>
+						{item.time && <strong>{item.time}</strong>}
+						{item.href ? <a href={item.href}>{item.title}</a> : <span>{item.title}</span>}
+					</li>
+				))}
+			</ul>
+		</section>
+	)
+}
+
+<style>
+	.today {
+		padding: 14px 18px;
+	}
+	.today__head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 2px 10px;
+		white-space: nowrap;
+	}
+	@media (max-width: 479px) {
+		.today {
+			padding: 14px;
+		}
+		.today__head .eyebrow {
+			letter-spacing: 0.1em;
+		}
+		.today__head :global(a) {
+			font-size: 14px;
+		}
+		/* Nelle colonne strette l'orario sta sopra, così il titolo non spezza le parole */
+		li {
+			flex-direction: column;
+			gap: 0;
+		}
+	}
+	ul {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 8px 20px;
+		margin: 12px 0 0;
+		padding: 0;
+		list-style: none;
+		font-size: 15px;
+		line-height: 1.35;
+		color: var(--text-strong);
+	}
+	li {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		min-width: 0;
+	}
+	strong {
+		flex: none;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		color: var(--navy-700);
+	}
+	li a,
+	li span {
+		min-width: 0;
+		overflow-wrap: break-word;
+	}
+	li a {
+		color: inherit;
+	}
+</style>
