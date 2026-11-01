@@ -3,6 +3,7 @@
 // di esempio scritti qui, senza modificare nulla su Sanity.
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
+import NewsCard from "../components/NewsCard.astro";
 import TodayInParish from "../components/TodayInParish.astro";
 import RecurringWeek from "../components/RecurringWeek.astro";
 import SongList from "../components/SongList.astro";
@@ -57,6 +58,10 @@ const songs: Song[] = [
 				)}
 			/></div>
 		<RecurringWeek items={recurring} today={today} />
+		<div style="margin-top: 24px; display: grid; gap: 16px">
+			<NewsCard post={{ _id: "n1", title: "Parroco come secondo tag", slug: "prova", publishedAt: "2026-11-01T10:00:00Z", tags: [{ name: "Oratorio", slug: "oratorio" }, { name: "Comunicazione del parroco", slug: "comunicazione-del-parroco" }] }} />
+			<NewsCard post={{ _id: "n2", title: "Solo un tag normale", slug: "prova-2", publishedAt: "2026-11-01T10:00:00Z", tags: [{ name: "Oratorio", slug: "oratorio" }] }} />
+		</div>
 		<div style="margin-top: 40px"><SongList songs={songs} /></div>
 		<div style="margin-top: 40px"><SongSheet lyrics={lyrics} /></div>
 			</Container>

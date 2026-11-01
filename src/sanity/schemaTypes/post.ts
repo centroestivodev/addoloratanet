@@ -1,6 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import {altField} from './imageAlt'
-import {POST_BADGES} from '../lib/badges'
 
 export default defineType({
   name: 'post',
@@ -26,13 +25,6 @@ export default defineType({
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
       validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'badge',
-      title: 'Etichetta',
-      type: 'string',
-      description: "Facoltativa. Compare accanto al titolo.",
-      options: {list: POST_BADGES},
     }),
     defineField({
       name: 'images',

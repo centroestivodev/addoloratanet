@@ -5,7 +5,7 @@ import TagDot from "./ui/TagDot.astro";
 import { urlFor } from "../sanity/lib/image";
 import { toPlainText } from "../sanity/lib/portableText";
 import { formatDay, dayInRome } from "../sanity/lib/eventDate";
-import { PARROCO_BADGE, type PostCard } from "../sanity/lib/queries";
+import { isParrocoPost, type PostCard } from "../sanity/lib/queries";
 
 interface Props {
 	post: PostCard;
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const { post, layout = "vertical", excerpt = true } = Astro.props;
-const isParroco = post.badge === PARROCO_BADGE;
+const isParroco = isParrocoPost(post);
 const tag = post.tags?.[0];
 const text = excerpt ? toPlainText(post.body, 180) : "";
 ---

@@ -16,7 +16,7 @@ import { urlFor } from "../../sanity/lib/image";
 import { truncate } from "../../sanity/lib/text";
 import { toPlainText } from "../../sanity/lib/portableText";
 import { dayInRome, formatDay, formatTimeLong, formatWhenLong, todayInRome } from "../../sanity/lib/eventDate";
-import { EVENT_CARD_FIELDS, PARROCO_BADGE, PUBLISHED_POST, TAG_FIELDS, type EventCard } from "../../sanity/lib/queries";
+import { EVENT_CARD_FIELDS, isParrocoPost, PARROCO_TAG, PUBLISHED_POST, TAG_FIELDS, type EventCard } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta: gli appuntamenti suggeriti dipendono da oggi
 export const prerender = false;
@@ -30,7 +30,7 @@ const event = await sanityClient.fetch(
 	`*[_type == "event" && slug.current == $slug][0]{
 		${EVENT_CARD_FIELDS},
 		"relatedPost": *[_type == "post" && _id == ^.relatedPost._ref && ${PUBLISHED_POST}][0]{
-			_id, title, "slug": slug.current, badge, body, "cover": images[0],
+			_id, title, "slug": slug.current, body, "cover": images[0],
 			"publishedAt": coalesce(publishedAt, _createdAt),
 			"tags": tags[]->{ ${TAG_FIELDS} }
 		},
@@ -144,8 +144,8 @@ const shareUrl = new URL(`/eventi/${slug}`, Astro.url.origin).toString();
 							)}
 							<div class="event-post__body">
 								<div class="event-post__meta">
-									{post.badge === PARROCO_BADGE && <Badge tone="navy">Comunicazione del parroco</Badge>}
-									{(post.tags ?? []).filter(Boolean).map((tag: { name: string; color?: string }) => (
+									{isParrocoPost(post) && <Badge tone="navy">Comunicazione del parroco</Badge>}
+									{(post.tags ?? []).filter((tag: { slug: string } | null) => tag && tag.slug !== PARROCO_TAG).map((tag: { name: string; color?: string }) => (
 										<TagDot name={tag.name} color={tag.color} />
 									))}
 									<span class="event-post__date">{formatDay(dayInRome(post.publishedAt))}</span>

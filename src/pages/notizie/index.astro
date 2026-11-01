@@ -7,7 +7,7 @@ import SectionHeading from "../../components/ui/SectionHeading.astro";
 import Tabs from "../../components/ui/Tabs.astro";
 import { setCdnCache } from "../../lib/cache";
 import { sanityClient } from "../../sanity/lib/client";
-import { PARROCO_BADGE, POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
+import { POST_CARD_FIELDS, PUBLISHED_POST, TAG_FIELDS, type PostCard, type Tag } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta: filtro e pagina arrivano dall'indirizzo (?tag=…&pagina=…&per=…)
 export const prerender = false;
@@ -26,9 +26,8 @@ const tags = await sanityClient.fetch<Tag[]>(
 	`*[_type == "tag" && defined(slug.current) && count(*[_type == "post" && ${PUBLISHED_POST} && references(^._id)]) > 0] | order(name asc){ ${TAG_FIELDS} }`,
 );
 
-const filterQuery =
-	filter === "tutte" ? "" : filter === "parroco" ? "&& badge == $badge" : "&& $tagSlug in tags[]->slug.current";
-const queryParams = { badge: PARROCO_BADGE, tagSlug: filter };
+const filterQuery = filter === "tutte" ? "" : "&& $tagSlug in tags[]->slug.current";
+const queryParams = { tagSlug: filter };
 
 const total = await sanityClient.fetch<number>(
 	`count(*[_type == "post" && defined(slug.current) && ${PUBLISHED_POST} ${filterQuery}])`,
@@ -55,7 +54,6 @@ function hrefFor({ tag = filter, per = perPage, pagina = 1 }: { tag?: string; pe
 
 const filterItems = [
 	{ value: "tutte", label: "Tutte" },
-	{ value: "parroco", label: "Dal parroco" },
 	...tags.map((t) => ({ value: t.slug, label: t.name })),
 ].map((item) => ({ label: item.label, href: hrefFor({ tag: item.value }), active: item.value === filter }));
 

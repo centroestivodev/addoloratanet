@@ -1,6 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
-
-const TIME = /^([01]?\d|2[0-3]):[0-5]\d$/
+import {isValidTime, TIME_ERROR} from '../lib/eventDate'
 
 // Un giorno in cui le Messe non seguono gli orari normali: sostituisce quelli feriali o festivi
 export default defineType({
@@ -19,16 +18,15 @@ export default defineType({
       name: 'times',
       title: 'Orari delle Messe',
       type: 'array',
-      description: 'Scrivi un orario alla volta e premi Invio, ad esempio 9:00 oppure 15:30. Sostituiscono gli orari normali di quel giorno.',
-      of: [defineArrayMember({type: 'string'})],
-      options: {layout: 'tags'},
-      validation: (Rule) =>
-        Rule.required()
-          .min(1)
-          .custom((times) => {
-            const wrong = ((times as string[] | undefined) ?? []).find((t) => !TIME.test(t))
-            return wrong ? `"${wrong}" non è un orario: scrivilo come 9:00 o 15:30` : true
-          }),
+      description: 'Aggiungi una riga per ogni orario, ad esempio 15:30. Sostituiscono gli orari normali di quel giorno.',
+      of: [
+        defineArrayMember({
+          type: 'string',
+          validation: (Rule) =>
+            Rule.required().custom((time) => (!time || isValidTime(time as string) ? true : TIME_ERROR)),
+        }),
+      ],
+      validation: (Rule) => Rule.required().min(1).unique(),
     }),
     defineField({
       name: 'note',

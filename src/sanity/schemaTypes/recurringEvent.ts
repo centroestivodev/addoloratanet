@@ -1,11 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
-
-// Orari a passi di 5 minuti, salvati come "HH:mm": servono anche orari come le 12:40
-const TIME_OPTIONS = Array.from({length: 288}, (_, i) => {
-  const h = String(Math.floor(i / 12)).padStart(2, '0')
-  const m = String((i % 12) * 5).padStart(2, '0')
-  return `${h}:${m}`
-})
+import {isTimeAfter, isValidTime, TIME_ERROR} from '../lib/eventDate'
 
 const WEEKDAYS = [
   {title: 'Lunedì', value: 1},
@@ -17,7 +11,7 @@ const WEEKDAYS = [
   {title: 'Domenica', value: 0},
 ]
 
-type Doc = {frequency?: string; weekday?: number; dates?: string[]} | undefined
+type Doc = {frequency?: string; weekday?: number; dates?: string[]; startTime?: string} | undefined
 
 export default defineType({
   name: 'recurringEvent',
@@ -73,15 +67,24 @@ export default defineType({
       name: 'startTime',
       title: 'Ora di inizio',
       type: 'string',
-      options: {list: TIME_OPTIONS},
-      validation: (Rule) => Rule.required(),
+      description: 'Ad esempio 11:00.',
+      validation: (Rule) =>
+        Rule.required().custom((time) => (!time || isValidTime(time as string) ? true : TIME_ERROR)),
     }),
     defineField({
       name: 'endTime',
       title: 'Ora di fine',
       type: 'string',
-      description: 'Facoltativa.',
-      options: {list: TIME_OPTIONS},
+      description: 'Facoltativa. Ad esempio 12:40.',
+      validation: (Rule) =>
+        Rule.custom((time, context) => {
+          if (!time) return true
+          if (!isValidTime(time)) return TIME_ERROR
+          const start = (context.document as Doc)?.startTime
+          return !start || !isValidTime(start) || isTimeAfter(time, start)
+            ? true
+            : "L'ora di fine deve essere dopo l'ora di inizio"
+        }),
     }),
     defineField({
       name: 'skippedDates',
