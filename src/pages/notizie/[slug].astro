@@ -4,6 +4,7 @@ import Container from "../../components/Container.astro";
 import PortableTextBody from "../../components/PortableTextBody";
 import NewsCard from "../../components/NewsCard.astro";
 import EventMiniRow from "../../components/EventMiniRow.astro";
+import Gallery from "../../components/Gallery.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Icon from "../../components/ui/Icon.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
@@ -106,20 +107,7 @@ function attachmentMeta(file: (typeof attachments)[number]) {
 						gallery.length > 0 && (
 							<>
 								<h2 class="post-gallery-title">Foto</h2>
-								<div class="post-gallery">
-									{gallery.map((img: any) => (
-										<a href={urlFor(img).width(2000).auto("format").url()} target="_blank" rel="noopener">
-											<img
-												src={urlFor(img).width(600).height(450).auto("format").url()}
-												width="600"
-												height="450"
-												alt={img.alt || ""}
-												loading="lazy"
-												decoding="async"
-											/>
-										</a>
-									))}
-								</div>
+								<Gallery images={gallery} />
 							</>
 						)
 					}
@@ -249,19 +237,6 @@ function attachmentMeta(file: (typeof attachments)[number]) {
 		margin: 36px 0 16px;
 		font: var(--type-h4);
 		color: var(--text-strong);
-	}
-	.post-gallery {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
-		gap: 12px;
-	}
-	.post-gallery img {
-		display: block;
-		width: 100%;
-		height: auto;
-		aspect-ratio: 4 / 3;
-		object-fit: cover;
-		border-radius: var(--radius-md);
 	}
 	.post-aside {
 		flex: 1 1 300px;

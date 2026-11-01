@@ -154,3 +154,91 @@ export function groupByMonth<T>(items: T[], dateOf: (item: T) => string): {label
 export function isPastEvent(event: EventSchedule, today: string): boolean {
   return (event.endDate || event.eventDate).slice(0, 10) < today
 }
+
+export interface RecurringEvent {
+  _id: string
+  title: string
+  frequency: 'weekly' | 'dates'
+  weekday?: number
+  dates?: string[]
+  skippedDates?: string[]
+  validFrom?: string
+  validUntil?: string
+  startTime: string
+  endTime?: string
+}
+
+export function occursOn(item: RecurringEvent, day: string): boolean {
+  if (item.frequency === 'dates') return (item.dates ?? []).includes(day)
+  if (toUtcDate(day).getUTCDay() !== item.weekday) return false
+  if (item.validFrom && day < item.validFrom) return false
+  if (item.validUntil && day > item.validUntil) return false
+  return !(item.skippedDates ?? []).includes(day)
+}
+
+export function recurringOn(items: RecurringEvent[], day: string): RecurringEvent[] {
+  return items.filter((item) => occursOn(item, day)).sort((a, b) => a.startTime.localeCompare(b.startTime))
+}
+
+export interface TodayItem {
+  key: string
+  title: string
+  time?: string
+  href?: string
+}
+
+const minutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+export const sortTimes = (times: string[]) => [...times].sort((a, b) => minutes(a) - minutes(b))
+
+// Appuntamenti fissi ed eventi di oggi, in ordine di orario; prima quelli senza un orario.
+// Di un evento di più giorni l'orario vale solo per il primo giorno.
+export function todayItems(
+  recurring: RecurringEvent[],
+  events: (EventSchedule & {_id: string; title: string; slug: string})[],
+  today: string,
+): TodayItem[] {
+  const items: TodayItem[] = [
+    ...recurringOn(recurring, today).map((item) => ({key: item._id, title: item.title, time: item.startTime})),
+    ...events.map((event) => ({
+      key: event._id,
+      title: event.title,
+      time: event.eventDate.slice(0, 10) === today ? event.startTime : undefined,
+      href: `/eventi/${event.slug}`,
+    })),
+  ]
+  return items.sort((a, b) => (a.time ? minutes(a.time) : -1) - (b.time ? minutes(b.time) : -1))
+}
+
+// "11:00 – 12:40"
+export function formatRecurringTime({startTime, endTime}: RecurringEvent): string {
+  return endTime ? `${startTime} – ${endTime}` : startTime
+}
+
+export interface WeekDay {
+  date: string
+  label: string
+  state: 'past' | 'today' | 'future'
+  items: RecurringEvent[]
+}
+
+// La settimana di `today`, da lunedì a domenica, con i soli giorni che hanno appuntamenti
+export function recurringWeek(items: RecurringEvent[], today: string): WeekDay[] {
+  const start = toUtcDate(today)
+  start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7))
+  return Array.from({length: 7}, (_, i) => {
+    const d = new Date(start)
+    d.setUTCDate(d.getUTCDate() + i)
+    const date = d.toISOString().slice(0, 10)
+    const p = parts(date)
+    return {
+      date,
+      label: capitalize(`${p.weekday} ${p.day}`),
+      state: date < today ? 'past' : date === today ? 'today' : 'future',
+      items: recurringOn(items, date),
+    } as WeekDay
+  }).filter((day) => day.items.length > 0)
+}

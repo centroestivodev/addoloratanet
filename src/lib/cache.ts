@@ -3,10 +3,29 @@
 const BROWSER_CACHE = 'public, max-age=0, must-revalidate'
 const CACHE_TAG = 'contenuti'
 
-// s-maxage è la rete di sicurezza se il purge fallisce e il ritardo normale per ciò che dipende
-// dall'orario; per una pagina ferma da tempo il primo visitatore può ricevere una copia vecchia fino a un giorno.
-const CDN_CACHE = 'public, durable, s-maxage=3600, stale-while-revalidate=86400'
+const CDN_MAX_AGE = 3600
 const CDN_CACHE_NOT_FOUND = 'public, durable, s-maxage=60'
+
+// Secondi che mancano alla mezzanotte di Roma
+export function secondsToMidnightInRome(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Rome',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hourCycle: 'h23',
+  }).formatToParts(now)
+  const value = (type: string) => Number(parts.find((p) => p.type === type)?.value)
+  return 86400 - (value('hour') * 3600 + value('minute') * 60 + value('second'))
+}
+
+// s-maxage è la rete di sicurezza se il purge fallisce. Molte pagine mostrano "oggi", gli eventi
+// futuri o le Messe del giorno: nessuna copia, nemmeno scaduta, deve essere servita dopo mezzanotte.
+export function cdnCacheValue(now = new Date()): string {
+  const left = secondsToMidnightInRome(now)
+  const maxAge = Math.min(CDN_MAX_AGE, left)
+  return `public, durable, s-maxage=${maxAge}, stale-while-revalidate=${left - maxAge}`
+}
 
 function applyCache(headers: Headers, cdnCache: string) {
   headers.set('Cache-Control', BROWSER_CACHE)
@@ -15,7 +34,7 @@ function applyCache(headers: Headers, cdnCache: string) {
 }
 
 export function setCdnCache(headers: Headers) {
-  applyCache(headers, CDN_CACHE)
+  applyCache(headers, cdnCacheValue())
 }
 
 export function setNotFoundCache(headers: Headers) {

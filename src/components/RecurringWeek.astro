@@ -1,0 +1,115 @@
+---
+// Appuntamenti fissi della settimana, da lunedì a domenica: oggi evidenziato, i giorni passati in grigio
+import { formatRecurringTime, recurringWeek, type RecurringEvent } from "../sanity/lib/eventDate";
+
+interface Props {
+	items: RecurringEvent[];
+	today: string;
+}
+
+const { items, today } = Astro.props;
+const days = recurringWeek(items, today);
+---
+
+{
+	days.length > 0 && (
+		<section class="recurring-week panel" id="appuntamenti-fissi">
+			<h2>Appuntamenti fissi della settimana</h2>
+			<ul>
+				{days.map((day) => (
+					<li class:list={["recurring-day", `recurring-day--${day.state}`]} aria-current={day.state === "today" ? "date" : undefined}>
+						<span class="recurring-day__label">
+							{day.state === "today" ? `Oggi, ${day.label.toLowerCase()}` : day.label}
+						</span>
+						<ul class="recurring-day__items">
+							{day.items.map((item) => (
+								<li>
+									<span class="recurring-day__time">{formatRecurringTime(item)}</span>
+									<span>{item.title}</span>
+								</li>
+							))}
+						</ul>
+					</li>
+				))}
+			</ul>
+		</section>
+	)
+}
+
+<style>
+	.recurring-week {
+		margin-top: 28px;
+		padding: 20px 20px 10px;
+		max-width: 880px;
+		box-sizing: border-box;
+		scroll-margin-top: 96px;
+	}
+	h2 {
+		margin: 0 0 12px;
+		font: var(--type-h4);
+		color: var(--text-strong);
+	}
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.recurring-day {
+		display: grid;
+		grid-template-columns: 150px minmax(0, 1fr);
+		gap: 4px 16px;
+		margin: 0 -10px;
+		padding: 10px;
+		border-top: 1px solid var(--border-subtle);
+	}
+	.recurring-day__label {
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--text-strong);
+	}
+	.recurring-day__items {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.recurring-day__items li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 12px;
+		font-size: 15px;
+		color: var(--text-body);
+	}
+	.recurring-day__time {
+		min-width: 104px;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-muted);
+	}
+	.recurring-day--today {
+		border-top-color: transparent;
+		border-radius: var(--radius-md);
+		background: var(--surface-brand-soft);
+	}
+	.recurring-day--today + .recurring-day {
+		border-top-color: transparent;
+	}
+	.recurring-day--today .recurring-day__label {
+		color: var(--text-brand);
+	}
+	.recurring-day--today .recurring-day__items li {
+		color: var(--text-strong);
+	}
+	.recurring-day--today .recurring-day__time {
+		color: var(--text-body);
+	}
+	.recurring-day--past .recurring-day__label,
+	.recurring-day--past .recurring-day__items li,
+	.recurring-day--past .recurring-day__time {
+		font-weight: 400;
+		color: var(--text-subtle);
+	}
+	@media (max-width: 639px) {
+		.recurring-day {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

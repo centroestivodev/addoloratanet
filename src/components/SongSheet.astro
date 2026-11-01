@@ -1,0 +1,173 @@
+---
+// Testo del canto con gli accordi sopra la sillaba giusta e il cambio di tonalità.
+// Ogni parola resta intera: quando la riga va a capo, gli accordi la seguono.
+import Icon from "./ui/Icon.astro";
+import { firstChord, parseSong } from "../lib/chordpro";
+
+interface Props {
+	lyrics: string;
+}
+
+const { lyrics } = Astro.props;
+const blocks = parseSong(lyrics);
+const key = firstChord(lyrics);
+---
+
+<div data-song>
+	{
+		key && (
+			<div class="song-key">
+				<span>Tonalità</span>
+				<button type="button" data-transpose="-1" aria-label="Abbassa di un semitono">
+					<Icon name="minus" size={18} />
+				</button>
+				<strong data-chord={key} aria-live="polite">{key}</strong>
+				<button type="button" data-transpose="1" aria-label="Alza di un semitono">
+					<Icon name="plus" size={18} />
+				</button>
+				<button type="button" class="song-key__reset" data-transpose-reset hidden>Originale</button>
+			</div>
+		)
+	}
+	<div class="song-sheet">
+		{
+			blocks.map((block) => (
+				<div class:list={["song-block", { "song-block--chorus": block.chorus }]}>
+					{block.label && <p class="song-block__label">{block.label}</p>}
+					{block.lines.map((line) => (
+						<p class:list={["song-line", { "song-line--plain": !line.hasChords }]}>
+							{line.words.map((word) => (
+								<span class="song-word">
+									{word.map((segment) => (
+										<span class="song-segment">
+											<span class="song-chord" data-chord={segment.chord}>{segment.chord}</span>
+											<span class="song-text">{segment.text}</span>
+										</span>
+									))}
+								</span>
+							))}
+						</p>
+					))}
+				</div>
+			))
+		}
+	</div>
+</div>
+
+<script>
+	import { transposeChord } from "../lib/chordpro";
+
+	document.querySelectorAll<HTMLElement>("[data-song]").forEach((song) => {
+		const chords = song.querySelectorAll<HTMLElement>("[data-chord]");
+		const reset = song.querySelector<HTMLButtonElement>("[data-transpose-reset]");
+		let semitones = 0;
+
+		const apply = (value: number) => {
+			semitones = (value + 12) % 12;
+			chords.forEach((el) => {
+				if (el.dataset.chord) el.textContent = transposeChord(el.dataset.chord, semitones);
+			});
+			if (reset) reset.hidden = semitones === 0;
+		};
+
+		song.querySelectorAll<HTMLButtonElement>("[data-transpose]").forEach((button) => {
+			button.addEventListener("click", () => apply(semitones + Number(button.dataset.transpose)));
+		});
+		reset?.addEventListener("click", () => apply(0));
+	});
+</script>
+
+<style>
+	.song-key {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 28px;
+		font-size: 15px;
+		color: var(--text-muted);
+	}
+	.song-key button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 40px;
+		height: 40px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+		color: var(--text-strong);
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.song-key button:hover {
+		border-color: var(--border-strong);
+		background: var(--bg-sunken);
+	}
+	.song-key .song-key__reset {
+		padding: 0 14px;
+		font-size: 14px;
+	}
+	.song-key .song-key__reset[hidden] {
+		display: none;
+	}
+	.song-key strong {
+		min-width: 52px;
+		text-align: center;
+		font-size: 18px;
+		font-weight: 700;
+		color: var(--text-brand);
+	}
+	.song-sheet {
+		display: flex;
+		flex-direction: column;
+		gap: 28px;
+	}
+	.song-block--chorus {
+		padding-left: 16px;
+		border-left: 3px solid var(--teal-500);
+	}
+	.song-block__label {
+		margin: 0 0 6px;
+		font: var(--type-caption);
+		font-weight: 600;
+		letter-spacing: var(--ls-wide);
+		text-transform: uppercase;
+		color: var(--text-muted);
+	}
+	.song-line {
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 0.3em;
+		margin: 0 0 6px;
+		font-size: 18px;
+		line-height: 1.35;
+		color: var(--text-body);
+	}
+	.song-word {
+		display: inline-flex;
+		align-items: flex-end;
+	}
+	.song-segment {
+		display: inline-flex;
+		flex-direction: column;
+	}
+	.song-chord {
+		min-height: 1.35em;
+		padding-right: 0.2em;
+		font-size: 15px;
+		font-weight: 700;
+		line-height: 1.35em;
+		white-space: nowrap;
+		color: var(--text-brand);
+	}
+	.song-line--plain .song-chord,
+	:global([data-hide-chords]) .song-chord,
+	:global([data-hide-chords]) .song-key {
+		display: none;
+	}
+	.song-text {
+		white-space: pre;
+	}
+</style>

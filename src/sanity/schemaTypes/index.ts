@@ -1,6 +1,10 @@
 import post from './post'
 import event from './event'
+import massSpecialDay from './massSpecialDay'
+import recurringEvent from './recurringEvent'
+import song from './song'
+import songCategory from './songCategory'
 import tag from './tag'
 import youtube from './youtube'
 
-export const schemaTypes = [post, event, tag, youtube]
+export const schemaTypes = [post, event, recurringEvent, massSpecialDay, song, songCategory, tag, youtube]

@@ -4,12 +4,26 @@ import Container from "../../components/Container.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import MassTimes from "../../components/ui/MassTimes.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
+import { setCdnCache } from "../../lib/cache";
 import { massPeriods, rosario, segreteria, vespri } from "../../data/parish";
+import { sanityClient } from "../../sanity/lib/client";
+import { formatWhenLong, sortTimes, todayInRome } from "../../sanity/lib/eventDate";
+import { MASS_SPECIAL_DAY_FIELDS, type MassSpecialDay } from "../../sanity/lib/queries";
+
+// Pagina generata a ogni richiesta: mostra i prossimi giorni con orari speciali
+export const prerender = false;
+
+setCdnCache(Astro.response.headers);
+
+const specialDays = await sanityClient.fetch<MassSpecialDay[]>(
+	`*[_type == "massSpecialDay" && date >= $today] | order(date asc)[0...6]{ ${MASS_SPECIAL_DAY_FIELDS} }`,
+	{ today: todayInRome() },
+);
 ---
 
 <Layout
 	title="Orari"
-	description="Orari delle SS. Messe, vespri, rosario e apertura della segreteria della Parrocchia Santa Maria Addolorata."
+	description="Orari delle Sante Messe, vespri, rosario e apertura della segreteria della Parrocchia Santa Maria Addolorata."
 >
 	<Container class="page-top">
 		<Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Info", href: "/info" }, { label: "Orari" }]} />
@@ -17,10 +31,23 @@ import { massPeriods, rosario, segreteria, vespri } from "../../data/parish";
 			<SectionHeading
 				as="h1"
 				size="lg"
-				title="Orari delle SS. Messe"
-				description="Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli orari delle SS. Messe."
+				title="Orari delle Sante Messe"
+				description="Gli orari delle celebrazioni variano nel corso dell'anno. Seleziona il periodo per vedere gli orari delle Sante Messe."
 			/>
 		</div>
+
+		{
+			specialDays.length > 0 && (
+				<section class="special-days" aria-label="Orari speciali">
+					<h2>Orari speciali</h2>
+					<div class="mass-grid">
+						{specialDays.map((day) => (
+							<MassTimes title={formatWhenLong({ eventDate: day.date })} subtitle={day.note} icon="calendar" times={sortTimes(day.times)} />
+						))}
+					</div>
+				</section>
+			)
+		}
 
 		<div class="period-tabs" role="tablist" aria-label="Periodo dell'anno" data-periods>
 			{
@@ -46,8 +73,8 @@ import { massPeriods, rosario, segreteria, vespri } from "../../data/parish";
 				<div role="tabpanel" id={`panel-${p.id}`} aria-labelledby={`tab-${p.id}`} hidden={i !== 0} data-panel={p.id}>
 					<p class="period-range">{p.range}</p>
 					<div class="mass-grid">
-						<MassTimes title="SS. Messe festive" subtitle="Domenica e giorni festivi" icon="church" times={p.festive} />
-						<MassTimes title="SS. Messe feriali" subtitle="Da lunedì a sabato" icon="clock" times={p.feriali} />
+						<MassTimes title="Sante Messe festive" subtitle="Domenica e giorni festivi" icon="church" times={p.festive} />
+						<MassTimes title="Sante Messe feriali" subtitle="Da lunedì a sabato" icon="clock" times={p.feriali} />
 					</div>
 				</div>
 			))
@@ -80,6 +107,14 @@ import { massPeriods, rosario, segreteria, vespri } from "../../data/parish";
 <style>
 	.orari-heading {
 		margin-top: 24px;
+	}
+	.special-days {
+		margin-top: 28px;
+	}
+	.special-days h2 {
+		margin: 0;
+		font: var(--type-h4);
+		color: var(--text-strong);
 	}
 	.period-tabs {
 		margin-top: 28px;

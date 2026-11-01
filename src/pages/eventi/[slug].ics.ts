@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({params, site, url}) => {
   lines.push(
     `SUMMARY:${escape(event.title)}`,
     `DESCRIPTION:${escape(event.description ?? '')}`,
-    'LOCATION:Parrocchia S. M. Addolorata\\, V.le della Venezia Giulia 134\\, 00177 Roma',
+    'LOCATION:Parrocchia S. M. Addolorata\\, Viale della Venezia Giulia 134\\, 00177 Roma',
     `URL:${new URL(`/eventi/${params.slug}`, site ?? url.origin)}`,
     'END:VEVENT',
     'END:VCALENDAR',

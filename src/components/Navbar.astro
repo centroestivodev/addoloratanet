@@ -12,12 +12,14 @@ const isHome = path === "/";
 const isInfo = path.startsWith("/info");
 const isNotizie = path.startsWith("/notizie");
 const isCal = path.startsWith("/eventi");
+const isCanti = path.startsWith("/canti");
 
 const mobileItems = [
 	{ href: "/", label: "Home", sub: false, active: isHome },
 	...infoLinks.map((l) => ({ ...l, sub: true, active: path === l.href })),
 	{ href: "/notizie", label: "Avvisi e notizie", sub: false, active: isNotizie },
 	{ href: "/eventi", label: "Calendario", sub: false, active: isCal },
+	{ href: "/canti", label: "Canti", sub: false, active: isCanti },
 ];
 ---
 
@@ -46,6 +48,7 @@ const mobileItems = [
 			</div>
 			<a href="/notizie" class:list={["site-nav__link", { "is-active": isNotizie }]}>Avvisi e notizie</a>
 			<a href="/eventi" class:list={["site-nav__link", { "is-active": isCal }]}>Calendario</a>
+			<a href="/canti" class:list={["site-nav__link", { "is-active": isCanti }]}>Canti</a>
 		</nav>
 
 		<button type="button" class="site-header__menu-btn" aria-label="Apri menu" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>

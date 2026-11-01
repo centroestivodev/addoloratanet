@@ -9,6 +9,7 @@ const STATIC_PATHS = [
   '/',
   '/notizie',
   '/eventi',
+  '/canti',
   '/info',
   '/info/orari',
   '/info/contatti',
@@ -23,10 +24,11 @@ interface Entry {
 }
 
 export const GET: APIRoute = async ({site, url}) => {
-  const {posts, events} = await sanityClient.fetch<{posts: Entry[]; events: Entry[]}>(
+  const {posts, events, songs} = await sanityClient.fetch<{posts: Entry[]; events: Entry[]; songs: Entry[]}>(
     `{
       "posts": *[_type == "post" && defined(slug.current) && ${PUBLISHED_POST}]{ "slug": slug.current, "updatedAt": _updatedAt },
-      "events": *[_type == "event" && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt }
+      "events": *[_type == "event" && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt },
+      "songs": *[_type == "song" && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt }
     }`,
   )
 
@@ -37,6 +39,7 @@ export const GET: APIRoute = async ({site, url}) => {
     ...STATIC_PATHS.map((path) => entry(path)),
     ...posts.map((p) => entry(`/notizie/${encodeURIComponent(p.slug)}`, p.updatedAt)),
     ...events.map((e) => entry(`/eventi/${encodeURIComponent(e.slug)}`, e.updatedAt)),
+    ...songs.map((s) => entry(`/canti/${encodeURIComponent(s.slug)}`, s.updatedAt)),
   ]
 
   const headers = new Headers({'Content-Type': 'application/xml; charset=utf-8'})

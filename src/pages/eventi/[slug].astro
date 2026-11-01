@@ -225,7 +225,9 @@ const shareUrl = new URL(`/eventi/${slug}`, Astro.url.origin).toString();
 		box-shadow: var(--shadow-sm);
 		border: 1px solid var(--border-subtle);
 	}
+	/* Qui il genitore è una colonna: con flex-basis l'altezza si fermerebbe a 280px e la locandina verrebbe tagliata */
 	.event-image--inline {
+		flex: none;
 		max-width: none;
 	}
 	.event-image img {

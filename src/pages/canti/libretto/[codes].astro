@@ -1,0 +1,160 @@
+---
+// Libretto condivisibile: i canti e il loro ordine arrivano dall'indirizzo (vedi lib/songbook.ts)
+import Layout from "../../../layouts/Layout.astro";
+import Container from "../../../components/Container.astro";
+import SongSheet from "../../../components/SongSheet.astro";
+import Button from "../../../components/ui/Button.astro";
+import TextLink from "../../../components/ui/TextLink.astro";
+import { notFoundResponse, setCdnCache } from "../../../lib/cache";
+import { MAX_SONGS } from "../../../lib/songbook";
+import { sanityClient } from "../../../sanity/lib/client";
+import { SONG_FIELDS, type Song } from "../../../sanity/lib/queries";
+
+export const prerender = false;
+
+const codes = [...new Set((Astro.params.codes ?? "").split("-").filter(Boolean))].slice(0, MAX_SONGS);
+const found = await sanityClient.fetch<Song[]>(`*[_type == "song" && defined(slug.current) && code.current in $codes]{ ${SONG_FIELDS} }`, { codes });
+const songs = codes.flatMap((code) => found.find((song) => song.code === code) ?? []);
+
+if (songs.length === 0) {
+	return notFoundResponse();
+}
+
+setCdnCache(Astro.response.headers);
+
+const missing = codes.length - songs.length;
+const entries = songs.map((song) => ({ code: song.code, title: song.title }));
+---
+
+<Layout title="Libretto dei canti" description={`Libretto con ${songs.length === 1 ? "1 canto" : `${songs.length} canti`}: ${songs.map((s) => s.title).join(", ")}.`} noindex>
+	<Container class="page-top" width={880}>
+		<TextLink href="/canti" arrow="left">Canti</TextLink>
+		<h1 id="indice">Libretto dei canti</h1>
+		<div class="book-actions" data-entries={JSON.stringify(entries)}>
+			<Button iconLeft="share-2" data-share>Condividi</Button>
+			<Button variant="outline" data-chords aria-pressed="false">Mostra gli accordi</Button>
+			<Button variant="outline" data-edit>Modifica</Button>
+			<span class="book-actions__status" role="status" data-status></span>
+		</div>
+		{missing > 0 && <p class="book-missing">{missing === 1 ? "Un canto non è più disponibile." : `${missing} canti non sono più disponibili.`}</p>}
+
+		<ol class="book-index">
+			{songs.map((song, i) => <li><a href={`#canto-${i + 1}`}>{song.title}</a></li>)}
+		</ol>
+
+		<div class="book-songs" data-book-songs data-hide-chords>
+			{
+				songs.map((song, i) => (
+					<section class="book-song" id={`canto-${i + 1}`}>
+						<div class="book-song__head">
+							<h2>{i + 1}. {song.title}</h2>
+							<a href="#indice">Indice</a>
+						</div>
+						{song.author && <p class="book-song__author">{song.author}</p>}
+						<SongSheet lyrics={song.lyrics ?? ""} />
+					</section>
+				))
+			}
+		</div>
+	</Container>
+</Layout>
+
+<script>
+	import { saveBook } from "../../../lib/songbook";
+
+	const actions = document.querySelector<HTMLElement>("[data-entries]");
+	const songs = document.querySelector<HTMLElement>("[data-book-songs]");
+	if (actions && songs) {
+		const status = actions.querySelector<HTMLElement>("[data-status]")!;
+		const chords = actions.querySelector<HTMLElement>("[data-chords]")!;
+
+		actions.querySelector("[data-share]")!.addEventListener("click", async () => {
+			const data = { title: document.title, url: location.href };
+			try {
+				if (navigator.share) {
+					await navigator.share(data);
+				} else {
+					await navigator.clipboard.writeText(data.url);
+					status.textContent = "Link copiato";
+				}
+			} catch (error) {
+				// Chi chiude il menu di condivisione non ha bisogno di alcun avviso
+				if ((error as Error).name !== "AbortError") status.textContent = "Copia il link dalla barra degli indirizzi";
+			}
+		});
+
+		chords.addEventListener("click", () => {
+			const show = songs.toggleAttribute("data-hide-chords");
+			chords.textContent = show ? "Mostra gli accordi" : "Nascondi gli accordi";
+			chords.setAttribute("aria-pressed", String(!show));
+		});
+
+		// Riporta i canti nell'elenco, per cambiarli o riordinarli
+		actions.querySelector("[data-edit]")!.addEventListener("click", () => {
+			saveBook(JSON.parse(actions.dataset.entries!));
+			location.href = "/canti";
+		});
+	}
+</script>
+
+<style>
+	h1 {
+		margin: 24px 0 0;
+		font: var(--type-h1);
+		letter-spacing: var(--ls-tight);
+		color: var(--text-strong);
+	}
+	.book-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-top: 18px;
+	}
+	.book-actions__status {
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+	.book-missing {
+		margin: 14px 0 0;
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+	.book-index {
+		margin: 24px 0 0;
+		padding-left: 24px;
+		list-style: decimal;
+		line-height: 1.8;
+	}
+	.book-songs {
+		display: flex;
+		flex-direction: column;
+		gap: 40px;
+		margin-top: 36px;
+	}
+	.book-song {
+		padding-top: 24px;
+		border-top: 1px solid var(--border-default);
+		scroll-margin-top: 88px;
+	}
+	.book-song__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 20px;
+	}
+	.book-song__head a {
+		flex: none;
+		font-size: 14px;
+	}
+	.book-song__author {
+		margin: -14px 0 20px;
+		color: var(--text-muted);
+	}
+	h2 {
+		margin: 0;
+		font: var(--type-h3);
+		color: var(--text-strong);
+	}
+</style>

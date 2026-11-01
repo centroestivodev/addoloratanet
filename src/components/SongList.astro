@@ -1,0 +1,278 @@
+---
+// Elenco dei canti con ricerca nel titolo, nell'autore e nel testo.
+// La ricerca avviene nel browser: il testo di ogni canto è già nella pagina.
+import SongbookBar from "./SongbookBar.astro";
+import Icon from "./ui/Icon.astro";
+import { normalizeSearch, songText } from "../lib/chordpro";
+import type { Song } from "../sanity/lib/queries";
+
+interface Props {
+	songs: Song[];
+}
+
+const { songs } = Astro.props;
+---
+
+<div data-song-search>
+	<SongbookBar />
+	<label class="song-search">
+		<span class="song-search__icon"><Icon name="search" size={18} /></span>
+		<input type="search" placeholder="Cerca per titolo o per testo" aria-label="Cerca un canto" autocomplete="off" data-song-input />
+	</label>
+	<p class="song-count" aria-live="polite" data-song-count></p>
+	<ul class="song-list">
+		{
+			songs.map((song) => (
+				<li data-song-item data-title={normalizeSearch(`${song.title} ${song.author ?? ""}`)} data-text={songText(song.lyrics ?? "")}>
+					<a href={`/canti/${song.slug}`} class="song-item">
+						<span class="song-item__body">
+							<span class="song-item__title">{song.title}</span>
+							{song.author && <span class="song-item__meta">{song.author}</span>}
+							<span class="song-item__match" data-song-match hidden></span>
+						</span>
+						<span class="song-item__chevron"><Icon name="chevron-right" size={18} /></span>
+					</a>
+					{song.code && (
+						<button
+							type="button"
+							class="song-add"
+							aria-pressed="false"
+							aria-label={`Aggiungi al libretto: ${song.title}`}
+							data-book-add
+							data-code={song.code}
+							data-title={song.title}
+							data-tooltip="Aggiungi al libretto"
+						>
+							<span class="song-add__off"><Icon name="plus" size={18} /></span>
+							<span class="song-add__on"><Icon name="check" size={18} /></span>
+						</button>
+					)}
+				</li>
+			))
+		}
+	</ul>
+	<p class="song-empty" data-song-empty hidden>Nessun canto corrisponde alla ricerca.</p>
+</div>
+
+<script>
+	import { normalizeSearch } from "../lib/chordpro";
+
+	const root = document.querySelector<HTMLElement>("[data-song-search]");
+	if (root) {
+		const input = root.querySelector<HTMLInputElement>("[data-song-input]")!;
+		const count = root.querySelector<HTMLElement>("[data-song-count]")!;
+		const empty = root.querySelector<HTMLElement>("[data-song-empty]")!;
+		const items = [...root.querySelectorAll<HTMLElement>("[data-song-item]")].map((el) => {
+			const lines = (el.dataset.text ?? "").split("\n");
+			return {
+				el,
+				lines,
+				title: el.dataset.title ?? "",
+				linesNormalized: lines.map(normalizeSearch),
+				text: normalizeSearch(lines.join(" ")),
+				match: el.querySelector<HTMLElement>("[data-song-match]")!,
+			};
+		});
+
+		const update = () => {
+			const query = normalizeSearch(input.value);
+			let visible = 0;
+			for (const item of items) {
+				const inTitle = item.title.includes(query);
+				const shown = !query || inTitle || item.text.includes(query);
+				item.el.hidden = !shown;
+				if (shown) visible++;
+
+				// Se il canto è stato trovato nel testo, mostra il verso che corrisponde
+				const line = query && !inTitle ? item.linesNormalized.findIndex((l) => l.includes(query)) : -1;
+				item.match.hidden = line < 0;
+				item.match.textContent = line < 0 ? "" : item.lines[line];
+			}
+			count.textContent = visible === 1 ? "1 canto" : `${visible} canti`;
+			empty.hidden = visible > 0;
+		};
+
+		input.addEventListener("input", update);
+		update();
+	}
+</script>
+
+<style>
+	.song-search {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		height: 48px;
+		padding: 0 16px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+		color: var(--text-muted);
+	}
+	.song-search:focus-within {
+		border-color: var(--border-focus);
+		outline: 2px solid var(--border-focus);
+		outline-offset: 1px;
+	}
+	.song-search__icon {
+		display: flex;
+		flex: none;
+	}
+	.song-search input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		outline: 0;
+		background: none;
+		/* Da 16px in su iOS non ingrandisce la pagina quando si tocca il campo */
+		font: inherit;
+		font-size: 16px;
+		color: var(--text-strong);
+	}
+	.song-count {
+		margin: 16px 0 8px;
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+	.song-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid var(--border-default);
+	}
+	.song-list li {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		border-bottom: 1px solid var(--border-subtle);
+	}
+	.song-list li[hidden] {
+		display: none;
+	}
+	.song-item {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 4px;
+		text-decoration: none;
+		color: inherit;
+	}
+	.song-add {
+		position: relative;
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border: 1px solid var(--border-default);
+		border-radius: var(--radius-pill);
+		background: var(--surface-card);
+		color: var(--text-strong);
+		cursor: pointer;
+	}
+	.song-add:hover {
+		border-color: var(--border-strong);
+		background: var(--bg-sunken);
+	}
+	.song-add:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+	.song-add[aria-pressed="true"] {
+		border-color: var(--text-brand);
+		background: var(--text-brand);
+		color: var(--text-on-dark);
+	}
+	.song-add span {
+		display: flex;
+	}
+	/* Fumetto sopra il pulsante, allineato a destra perché il pulsante sta sul bordo dell'elenco */
+	.song-add::before,
+	.song-add::after {
+		position: absolute;
+		z-index: 4;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity var(--dur-fast) var(--ease-out);
+	}
+	.song-add::after {
+		content: attr(data-tooltip);
+		right: 0;
+		bottom: calc(100% + 7px);
+		padding: 3px 7px;
+		border-radius: 4px;
+		background: var(--surface-ink);
+		font: inherit;
+		font-size: 12px;
+		font-weight: 400;
+		white-space: nowrap;
+		color: var(--text-on-dark);
+	}
+	.song-add::before {
+		content: "";
+		right: 15px;
+		bottom: calc(100% + 2px);
+		border: 5px solid transparent;
+		border-bottom-width: 0;
+		border-top-color: var(--surface-ink);
+	}
+	.song-add:focus-visible::before,
+	.song-add:focus-visible::after {
+		opacity: 1;
+	}
+	@media (hover: hover) {
+		.song-add:hover::before,
+		.song-add:hover::after {
+			opacity: 1;
+		}
+	}
+	.song-add[aria-pressed="false"] .song-add__on,
+	.song-add[aria-pressed="true"] .song-add__off {
+		display: none;
+	}
+	.song-item:hover {
+		background: var(--bg-sunken);
+		color: inherit;
+	}
+	.song-item__body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.song-item__title {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 18px;
+		line-height: 1.25;
+		color: var(--text-strong);
+	}
+	.song-item__meta {
+		font-size: 14px;
+		color: var(--text-muted);
+	}
+	.song-item__match {
+		font-size: 14px;
+		font-style: italic;
+		color: var(--text-body);
+	}
+	.song-item__match[hidden] {
+		display: none;
+	}
+	.song-item__chevron {
+		flex: none;
+		display: flex;
+		color: var(--text-subtle);
+	}
+	.song-empty {
+		margin: 20px 0 0;
+		color: var(--text-muted);
+	}
+	.song-empty[hidden] {
+		display: none;
+	}
+</style>

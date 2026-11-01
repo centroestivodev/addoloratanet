@@ -27,6 +27,8 @@ const fantasantiagoSoloInDev = {
 		"astro:config:setup": ({ command, injectRoute }) => {
 			if (command === "dev") {
 				injectRoute({ pattern: "/fantasantiago", entrypoint: "./src/dev/fantasantiago.astro" });
+				injectRoute({ pattern: "/mock-galleria", entrypoint: "./src/dev/mock-galleria.astro" });
+				injectRoute({ pattern: "/mock-contenuti", entrypoint: "./src/dev/mock-contenuti.astro" });
 			}
 		},
 		"astro:build:done": async ({ dir }) => {

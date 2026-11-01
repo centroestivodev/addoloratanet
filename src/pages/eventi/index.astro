@@ -2,12 +2,13 @@
 import Layout from "../../layouts/Layout.astro";
 import Container from "../../components/Container.astro";
 import EventListItem from "../../components/EventListItem.astro";
+import RecurringWeek from "../../components/RecurringWeek.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import Tabs from "../../components/ui/Tabs.astro";
 import { setCdnCache } from "../../lib/cache";
 import { sanityClient } from "../../sanity/lib/client";
-import { groupByMonth, todayInRome } from "../../sanity/lib/eventDate";
-import { EVENT_CARD_FIELDS, type EventCard, type Tag } from "../../sanity/lib/queries";
+import { groupByMonth, todayInRome, type RecurringEvent } from "../../sanity/lib/eventDate";
+import { EVENT_CARD_FIELDS, RECURRING_EVENTS, type EventCard, type Tag } from "../../sanity/lib/queries";
 
 // Pagina generata a ogni richiesta, per separare i prossimi eventi da quelli passati in base a oggi.
 // Vista e filtro arrivano dall'indirizzo: ?vista=passati&tag=…
@@ -19,13 +20,20 @@ const params = Astro.url.searchParams;
 const past = params.get("vista") === "passati";
 const filter = params.get("tag") || "tutti";
 
-const events = await sanityClient.fetch<EventCard[]>(
-	past
-		? `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) < $today]
-			| order(eventDate desc, startTime desc){ ${EVENT_CARD_FIELDS} }`
-		: `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
-			| order(eventDate asc, startTime asc){ ${EVENT_CARD_FIELDS} }`,
-	{ today: todayInRome() },
+const today = todayInRome();
+
+const { events, recurring } = await sanityClient.fetch<{ events: EventCard[]; recurring: RecurringEvent[] }>(
+	`{
+		"events": ${
+			past
+				? `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) < $today]
+					| order(eventDate desc, startTime desc){ ${EVENT_CARD_FIELDS} }`
+				: `*[_type == "event" && defined(slug.current) && coalesce(endDate, eventDate) >= $today]
+					| order(eventDate asc, startTime asc){ ${EVENT_CARD_FIELDS} }`
+		},
+		"recurring": ${RECURRING_EVENTS}
+	}`,
+	{ today },
 );
 
 // Le schede dei filtri mostrano solo i tag presenti negli eventi di questa vista
@@ -78,6 +86,7 @@ const emptyText =
 			/>
 			<Tabs label="Periodo" items={viewTabs} />
 		</div>
+		{!past && filter === "tutti" && <RecurringWeek items={recurring} today={today} />}
 		{
 			filterTabs.length > 1 && (
 				<div class="tabs-scroll">
