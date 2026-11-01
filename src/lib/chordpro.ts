@@ -1,5 +1,6 @@
 // Testi dei canti in formato ChordPro: "[Do]Alleluia, [Sol]canta". Accordi in notazione italiana.
 // Direttive riconosciute: {c: Ritornello} per un'etichetta, {soc} e {eoc} per il ritornello.
+// {chorus} ripete l'ultimo ritornello.
 
 export interface ChordSegment {
   chord?: string
@@ -34,6 +35,18 @@ export function isKnownChord(chord: string): boolean {
   return chord.split('/').every((part) => parseNote(part) !== undefined)
 }
 
+// "RE" e "MI-" si mostrano come "Re" e "Mi-"; ciò che non riconosce resta com'è
+function normalizeChord(chord: string): string {
+  if (!isKnownChord(chord)) return chord
+  return chord
+    .split('/')
+    .map((part) => {
+      const [, natural, accidental, rest] = part.match(NOTE)!
+      return natural[0].toUpperCase() + natural.slice(1).toLowerCase() + accidental.toLowerCase() + rest
+    })
+    .join('/')
+}
+
 // Sposta l'accordo di `semitones`, compreso il basso ("Do/Mi"). Ciò che non riconosce resta com'è.
 export function transposeChord(chord: string, semitones: number): string {
   if (!isKnownChord(chord)) return chord
@@ -55,7 +68,7 @@ function parseLine(raw: string): SongLine {
   let chord: string | undefined
   for (const match of raw.matchAll(CHORD)) {
     if (match.index > last || chord) segments.push({chord, text: raw.slice(last, match.index)})
-    chord = match[1].trim() || undefined
+    chord = normalizeChord(match[1].trim()) || undefined
     last = match.index + match[0].length
   }
   segments.push({chord, text: raw.slice(last)})
@@ -74,27 +87,38 @@ function parseLine(raw: string): SongLine {
 
 export function parseSong(source: string): SongBlock[] {
   const blocks: SongBlock[] = []
+  let lastChorus: SongBlock[] = []
   let current: SongBlock | undefined
   let chorus = false
   const open = (label?: string) => (current = {label, chorus, lines: []})
+  const close = () => {
+    if (current?.lines.length || current?.label) {
+      blocks.push(current)
+      if (current.chorus) lastChorus.push(current)
+    }
+    current = undefined
+  }
 
   for (const line of source.split(/\r?\n/).map((l) => l.trim())) {
     const directive = line.match(DIRECTIVE)
     if (directive) {
       const name = directive[1].toLowerCase()
-      if (current?.lines.length || current?.label) blocks.push(current)
-      current = undefined
-      if (name === 'soc' || name === 'start_of_chorus') chorus = true
+      close()
+      if (name === 'soc' || name === 'start_of_chorus') {
+        chorus = true
+        lastChorus = []
+      }
       if (name === 'eoc' || name === 'end_of_chorus') chorus = false
       if (name === 'c' || name === 'comment') open(directive[2])
+      if (name === 'chorus') blocks.push(...lastChorus)
     } else if (!line) {
-      if (current?.lines.length) blocks.push(current)
-      current = undefined
+      if (current?.lines.length) close()
+      else current = undefined
     } else {
       ;(current ?? open()).lines.push(parseLine(line))
     }
   }
-  if (current?.lines.length || current?.label) blocks.push(current)
+  close()
   return blocks
 }
 
@@ -102,7 +126,7 @@ export function parseSong(source: string): SongBlock[] {
 export function firstChord(source: string): string | undefined {
   for (const match of source.matchAll(CHORD)) {
     const chord = match[1].trim()
-    if (chord) return chord
+    if (chord) return normalizeChord(chord)
   }
 }
 
