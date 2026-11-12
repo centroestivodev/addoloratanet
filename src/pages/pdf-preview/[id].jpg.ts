@@ -24,6 +24,10 @@ export const GET: APIRoute = async ({params}) => {
 
   try {
     const {getDocument} = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    // pdf.js in Node carica il worker con un import dinamico che il bundle della funzione non include:
+    // importandolo qui a mano finisce nel pacchetto, e pdf.js lo trova in globalThis.pdfjsWorker
+    const g = globalThis as {pdfjsWorker?: unknown}
+    g.pdfjsWorker ??= await import('pdfjs-dist/legacy/build/pdf.worker.mjs')
     const doc = await getDocument({data: bytes, useSystemFonts: true, verbosity: 0}).promise
     const page = await doc.getPage(1)
     const base = page.getViewport({scale: 1})

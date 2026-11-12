@@ -9,3 +9,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
 	readonly env: ImportMetaEnv;
 }
+
+// Il worker di pdf.js non ha tipi propri
+declare module 'pdfjs-dist/legacy/build/pdf.worker.mjs'
