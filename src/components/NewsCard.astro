@@ -1,48 +1,41 @@
 ---
 import Icon from "./ui/Icon.astro";
+import MediaCard from "./MediaCard.astro";
 import Badge from "./ui/Badge.astro";
 import TagDot from "./ui/TagDot.astro";
 import { urlFor } from "../sanity/lib/image";
 import { toPlainText } from "../sanity/lib/portableText";
 import { formatDay, dayInRome } from "../sanity/lib/eventDate";
-import { isParrocoPost, type PostCard } from "../sanity/lib/queries";
+import { isParrocoPost, pdfPreviewUrl, type PostCard } from "../sanity/lib/queries";
 
 interface Props {
 	post: PostCard;
-	// "responsive": orizzontale da 640px in su, verticale sotto
-	layout?: "vertical" | "responsive";
+	// "vertical": immagine sopra, testo sotto. "row": card orizzontale condivisa (MediaCard)
+	layout?: "vertical" | "row";
+	size?: "md" | "lg";
 	excerpt?: boolean;
+	class?: string;
 }
 
-const { post, layout = "vertical", excerpt = true } = Astro.props;
+const { post, layout = "vertical", size = "md", excerpt = true, class: className } = Astro.props;
 const isParroco = isParrocoPost(post);
 const tag = post.tags?.[0];
 const text = excerpt ? toPlainText(post.body, 180) : "";
+const href = `/notizie/${post.slug}`;
+// Senza foto si mostra la prima pagina del PDF allegato, se c'è
+const pdfPreview = !post.cover?.asset && post.pdfId ? pdfPreviewUrl(post.pdfId) : undefined;
+const thumb = post.cover?.asset
+	? { src: urlFor(post.cover).width(600).height(600).auto("format").url() }
+	: pdfPreview
+		? { src: pdfPreview, position: "top" }
+		: undefined;
 ---
 
-<a href={`/notizie/${post.slug}`} class:list={["news-card", `news-card--${layout}`]}>
-	<div class="news-card__media">
-		{
-			post.cover?.asset ? (
-				<img
-					src={urlFor(post.cover).width(800).height(500).auto("format").url()}
-					width="800"
-					height="500"
-					alt=""
-					loading="lazy"
-					decoding="async"
-				/>
-			) : (
-				<span class="news-card__placeholder">
-					<Icon name="newspaper" size={36} strokeWidth={1.5} />
-				</span>
-			)
-		}
-	</div>
-	<div class="news-card__body">
-		<div class="news-card__meta">
-			{
-				isParroco ? (
+{
+	layout === "row" ? (
+		<MediaCard href={href} title={post.title} image={thumb} size={size} excerpt={text || undefined} placeholder="newspaper" class={className}>
+			<Fragment slot="meta">
+				{isParroco ? (
 					<Badge tone="navy">Comunicazione del parroco</Badge>
 				) : (
 					tag && (
@@ -50,14 +43,49 @@ const text = excerpt ? toPlainText(post.body, 180) : "";
 							<TagDot name={tag.name} color={tag.color} />
 						</Badge>
 					)
-				)
-			}
-			<span class="news-card__date">{formatDay(dayInRome(post.publishedAt))}</span>
-		</div>
-		<h3 class="news-card__title">{post.title}</h3>
-		{text && <p class="news-card__excerpt">{text}</p>}
-	</div>
-</a>
+				)}
+				<span>{formatDay(dayInRome(post.publishedAt))}</span>
+			</Fragment>
+		</MediaCard>
+	) : (
+		<a href={href} class:list={["news-card", className]}>
+			<div class="news-card__media">
+				{post.cover?.asset ? (
+					<img
+						src={urlFor(post.cover).width(800).height(500).auto("format").url()}
+						width="800"
+						height="500"
+						alt=""
+						loading="lazy"
+						decoding="async"
+					/>
+				) : pdfPreview ? (
+					<img src={pdfPreview} width="640" height="500" alt="" loading="lazy" decoding="async" style={{ objectPosition: "top" }} />
+				) : (
+					<span class="news-card__placeholder">
+						<Icon name="newspaper" size={36} strokeWidth={1.5} />
+					</span>
+				)}
+			</div>
+			<div class="news-card__body">
+				<div class="news-card__meta">
+					{isParroco ? (
+						<Badge tone="navy">Comunicazione del parroco</Badge>
+					) : (
+						tag && (
+							<Badge>
+								<TagDot name={tag.name} color={tag.color} />
+							</Badge>
+						)
+					)}
+					<span class="news-card__date">{formatDay(dayInRome(post.publishedAt))}</span>
+				</div>
+				<h3 class="news-card__title">{post.title}</h3>
+				{text && <p class="news-card__excerpt">{text}</p>}
+			</div>
+		</a>
+	)
+}
 
 <style>
 	.news-card {
@@ -150,21 +178,5 @@ const text = excerpt ? toPlainText(post.body, 180) : "";
 		-webkit-line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-	}
-	@media (min-width: 640px) {
-		.news-card--responsive {
-			flex-direction: row;
-			gap: 20px;
-			padding: 16px;
-			align-items: center;
-		}
-		.news-card--responsive .news-card__media {
-			width: 38%;
-			aspect-ratio: 4 / 3;
-			border-radius: var(--radius-md);
-		}
-		.news-card--responsive .news-card__body {
-			padding: 0;
-		}
 	}
 </style>

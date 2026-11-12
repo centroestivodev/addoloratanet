@@ -99,7 +99,7 @@ const countLabel =
 
 			{pages > 1 && <Pager page={page} pages={pages} position="top" hrefFor={(n) => hrefFor({ pagina: n })} />}
 
-			{posts.map((post) => <NewsCard post={post} layout="responsive" />)}
+			{posts.map((post) => <NewsCard post={post} layout="row" size="lg" />)}
 
 			{pages > 1 && <Pager page={page} pages={pages} position="bottom" hrefFor={(n) => hrefFor({ pagina: n })} />}
 		</div>
