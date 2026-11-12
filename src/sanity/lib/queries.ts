@@ -24,6 +24,8 @@ export interface PostCard {
   cover?: any
   body?: any[]
   tags?: Tag[]
+  // Id dell'asset del primo PDF allegato: se la notizia non ha foto, la card ne mostra la prima pagina
+  pdfId?: string
 }
 
 // Il tag delle comunicazioni del parroco si riconosce dallo slug e si mostra in evidenza
@@ -50,6 +52,7 @@ export const POST_CARD_FIELDS = `
   _id, title, "slug": slug.current, body,
   "publishedAt": coalesce(publishedAt, _createdAt),
   "cover": images[0],
+  "pdfId": attachments[asset->extension == "pdf"][0].asset._ref,
   "tags": tags[]->{ ${TAG_FIELDS} }
 `
 
@@ -94,3 +97,23 @@ export const SONG_FIELDS = `
   _id, title, "slug": slug.current, "code": code.current, author, lyrics,
   "categories": coalesce(categories[]->{ ${SONG_CATEGORY_FIELDS} }, [])
 `
+
+// Cassa: prodotti e combo. Il prezzo in Sanity è in euro, in cassa si calcola in centesimi.
+export interface CassaProductDoc {
+  id: string
+  name: string
+  description?: string
+  priceCents: number
+  isCombo: boolean
+  image?: any
+  components: {productId: string; quantity: number}[]
+}
+
+export const CASSA_PRODUCTS = `*[_type == "product" && hidden != true && defined(price)]
+  | order(coalesce(order, 9999) asc, name asc){
+    "id": _id, name, description, "priceCents": round(price * 100), "isCombo": coalesce(isCombo, false), image,
+    "components": select(isCombo == true => comboItems[defined(product._ref)]{ "productId": product._ref, "quantity": coalesce(quantity, 1) }, [])
+  }`
+
+// Immagine di una card notizia: la foto, altrimenti la prima pagina del PDF allegato
+export const pdfPreviewUrl = (pdfId: string) => `/pdf-preview/${pdfId}.jpg`

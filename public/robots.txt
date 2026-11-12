@@ -1,4 +1,5 @@
 User-agent: *
 Disallow: /admin
+Disallow: /cassa
 
 Sitemap: https://addolorata.net/sitemap.xml

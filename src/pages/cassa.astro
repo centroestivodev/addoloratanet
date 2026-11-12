@@ -1,0 +1,39 @@
+---
+import "../styles/global.css";
+import Cassa, { type CassaProduct } from "../components/cassa/Cassa";
+import { sanityClient } from "../sanity/lib/client";
+import { urlFor } from "../sanity/lib/image";
+import { CASSA_PRODUCTS, type CassaProductDoc } from "../sanity/lib/queries";
+
+// Pagina di servizio per le feste: dati letti a ogni richiesta, mai indicizzata
+export const prerender = false;
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const docs = await sanityClient.fetch<CassaProductDoc[]>(CASSA_PRODUCTS);
+
+const products: CassaProduct[] = docs.map((p) => ({
+	id: p.id,
+	name: p.name,
+	description: p.description,
+	priceCents: p.priceCents,
+	isCombo: p.isCombo,
+	image: p.image?.asset ? urlFor(p.image).width(400).height(192).auto("format").url() : undefined,
+	components: p.components ?? [],
+}));
+---
+
+<!doctype html>
+<html lang="it">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#0a2443" />
+		<link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
+		<title>Cassa | Parrocchia S. M. Addolorata</title>
+	</head>
+	<body>
+		<Cassa client:load products={products} />
+	</body>
+</html>

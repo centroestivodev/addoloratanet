@@ -1,0 +1,130 @@
+---
+import Badge from "./ui/Badge.astro";
+import TagDot from "./ui/TagDot.astro";
+import { urlFor } from "../sanity/lib/image";
+import { formatDay, dayInRome } from "../sanity/lib/eventDate";
+import { isParrocoPost, pdfPreviewUrl, type PostCard } from "../sanity/lib/queries";
+
+interface Props {
+	post: PostCard;
+}
+
+const { post } = Astro.props;
+const isParroco = isParrocoPost(post);
+const tag = post.tags?.[0];
+---
+
+<a href={`/notizie/${post.slug}`} class="news-hero">
+	{
+		post.cover?.asset ? (
+			<img
+				src={urlFor(post.cover).width(1400).height(800).auto("format").url()}
+				width="1400"
+				height="800"
+				alt=""
+				decoding="async"
+			/>
+		) : (
+			post.pdfId && <img src={pdfPreviewUrl(post.pdfId)} width="640" height="905" alt="" decoding="async" style="object-position: top" />
+		)
+	}
+	<span class="news-hero__overlay" aria-hidden="true"></span>
+	<span class="news-hero__body">
+		<span class="news-hero__meta">
+			{
+				isParroco ? (
+					<Badge tone="accent">Comunicazione del parroco</Badge>
+				) : (
+					tag && (
+						<Badge tone="accent">
+							<TagDot name={tag.name} color={tag.color} />
+						</Badge>
+					)
+				)
+			}
+			<span class="news-hero__date">{formatDay(dayInRome(post.publishedAt))}</span>
+		</span>
+		<span class="news-hero__title">{post.title}</span>
+	</span>
+</a>
+
+<style>
+	.news-hero {
+		position: relative;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		min-height: 340px;
+		padding: 20px;
+		box-sizing: border-box;
+		border-radius: var(--radius-xl);
+		text-decoration: none;
+		color: var(--text-on-dark);
+		background: var(--navy-800);
+		box-shadow: var(--shadow-md);
+		font-family: var(--font-sans);
+	}
+	.news-hero:hover {
+		color: var(--text-on-dark);
+	}
+	.news-hero img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform var(--dur-slow) var(--ease-out);
+	}
+	.news-hero:hover img {
+		transform: scale(1.03);
+	}
+	.news-hero__overlay {
+		position: absolute;
+		inset: 0;
+		background: var(--overlay-hero);
+	}
+	.news-hero__body {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.news-hero__meta {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.news-hero__date {
+		font-size: 13px;
+		color: var(--text-on-dark-muted);
+	}
+	.news-hero__title {
+		max-width: 640px;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 26px;
+		line-height: 1.15;
+		letter-spacing: -0.01em;
+		text-wrap: balance;
+	}
+	@media (min-width: 640px) {
+		.news-hero {
+			min-height: 440px;
+			padding: 32px;
+		}
+		.news-hero__meta {
+			gap: 12px;
+		}
+		.news-hero__date {
+			font-size: 14px;
+		}
+		.news-hero__title {
+			font-size: 36px;
+			line-height: 1.12;
+			letter-spacing: -0.015em;
+		}
+	}
+</style>
