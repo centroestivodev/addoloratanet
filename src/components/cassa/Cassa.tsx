@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState, type ReactNode} from 'react'
+import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import './cassa.css'
 
 export interface CassaProduct {
@@ -111,6 +111,10 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   const [custom, setCustom] = useState('')
   const [dismissed, setDismissed] = useState<Record<string, boolean>>({})
   const [loaded, setLoaded] = useState(false)
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const popRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [popPos, setPopPos] = useState<{top: number; left: number; arrow: number; above: boolean} | null>(null)
 
   // Il conto sopravvive a un ricaricamento accidentale della pagina
   useEffect(() => {
@@ -157,6 +161,45 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   const count = ids.reduce((n, id) => n + cart[id], 0)
   const total = ids.reduce((t, id) => t + cart[id] * byId.get(id)!.priceCents, 0)
   const customN = parseInt(custom, 10)
+
+  // Posiziona il popover sotto la card; se sotto non c'è spazio lo apre sopra, e comunque lo tiene
+  // dentro l'area visibile della lista (tra intestazione e barra del totale)
+  const placePop = useCallback(() => {
+    const card = pop ? cardRefs.current[pop] : null
+    const box = popRef.current
+    const area = scrollerRef.current
+    if (!card || !box || !area) return setPopPos(null)
+    const GAP = 10
+    const EDGE = 8
+    const c = card.getBoundingClientRect()
+    const a = area.getBoundingClientRect()
+    const w = box.offsetWidth
+    const h = box.offsetHeight
+    const spaceBelow = a.bottom - c.bottom - EDGE
+    const spaceAbove = c.top - a.top - EDGE
+    const above = spaceBelow < h + GAP && spaceAbove > spaceBelow
+    let top = above ? c.top - GAP - h : c.bottom + GAP
+    top = Math.min(Math.max(top, a.top + EDGE), a.bottom - h - EDGE)
+    const center = c.left + c.width / 2
+    const left = Math.min(Math.max(center - w / 2, a.left + EDGE), a.right - w - EDGE)
+    const arrow = Math.min(Math.max(center - left - 7, 18), w - 32)
+    setPopPos({top, left, arrow, above})
+  }, [pop])
+
+  useLayoutEffect(() => {
+    placePop()
+  }, [placePop, custom, cart])
+
+  useEffect(() => {
+    if (!pop) return
+    const area = scrollerRef.current
+    window.addEventListener('resize', placePop)
+    area?.addEventListener('scroll', placePop)
+    return () => {
+      window.removeEventListener('resize', placePop)
+      area?.removeEventListener('scroll', placePop)
+    }
+  }, [pop, placePop])
 
   function setQty(id: string, n: number) {
     setCart((prev) => {
@@ -223,14 +266,16 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
     {title: 'Prodotti', eyebrow: 'Singoli', items: singles},
   ].filter((s) => s.items.length > 0)
 
-  function renderItem(item: CassaProduct, index: number) {
+  function renderItem(item: CassaProduct) {
     const qty = cart[item.id] || 0
     const open = pop === item.id
-    const col = index % 2
     return (
       <div key={item.id} className="cs-item" style={{zIndex: open ? 30 : 1}}>
         <button
           type="button"
+          ref={(el) => {
+            cardRefs.current[item.id] = el
+          }}
           className={'cs-card' + (qty > 0 ? ' is-in' : '')}
           aria-label={`${item.name}, ${euro(item.priceCents)}${qty ? `, nel conto: ${qty}` : ''}`}
           aria-haspopup="dialog"
@@ -255,11 +300,13 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
         {open && (
           <div
+            ref={popRef}
             role="dialog"
             aria-label={`Quantità per ${item.name}`}
-            className={'cs-pop ' + (col === 0 ? 'cs-pop--left' : 'cs-pop--right')}
+            className={'cs-pop' + (popPos?.above ? ' is-above' : '')}
+            style={popPos ? {top: popPos.top, left: popPos.left} : {visibility: 'hidden', top: 0, left: 0}}
           >
-            <span aria-hidden="true" className="cs-pop__arrow" style={{left: col === 0 ? 79 : 199}} />
+            <span aria-hidden="true" className="cs-pop__arrow" style={{left: popPos?.arrow ?? 20}} />
             <div className="cs-pop__head">
               <div className="cs-pop__title">
                 <span className="cs-eyebrow">Quanti?</span>
@@ -322,10 +369,10 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
         </div>
       </header>
 
-      <div className="cs-scroll">
-        <div className="cs-list">
-          {pop && <button type="button" className="cs-scrim" aria-label="Chiudi la scelta della quantità" onClick={closePop} />}
+      {pop && <button type="button" className="cs-scrim" aria-label="Chiudi la scelta della quantità" onClick={closePop} />}
 
+      <div className="cs-scroll" ref={scrollerRef}>
+        <div className="cs-list">
           {sections.length === 0 && <p className="cs-empty">Nessun prodotto in cassa. Aggiungili da Sanity, nella sezione “Prodotto (cassa)”.</p>}
 
           {sections.map((section) => (
@@ -342,15 +389,18 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
       {view === 'none' && !pop && first && (
         <button type="button" className="cs-hint" onClick={openSummary}>
-          <Icon name="sparkles" />
-          <span>
-            Con {first.combo.name} risparmi {euro(first.saving)}. Tocca per vedere
+          <span className="cs-hint__inner">
+            <Icon name="sparkles" />
+            <span>
+              Con {first.combo.name} risparmi {euro(first.saving)}. Tocca per vedere
+            </span>
+            <Icon name="arrow-right" size={16} />
           </span>
-          <Icon name="arrow-right" size={16} />
         </button>
       )}
 
       <div className="cs-bar">
+       <div className="cs-bar__inner">
         <div className="cs-bar__sum">
           <span className="cs-bar__count">{count === 0 ? 'Nessun articolo' : count === 1 ? '1 articolo' : `${count} articoli`}</span>
           <span className="cs-bar__total">{euro(total)}</span>
@@ -358,6 +408,7 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
         <button type="button" className="cs-btn cs-btn--primary cs-btn--lg" disabled={count === 0} onClick={openSummary}>
           Riepilogo <Icon name="arrow-right" size={18} />
         </button>
+       </div>
       </div>
 
       {showSuggestion && first && (
