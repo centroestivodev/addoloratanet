@@ -9,6 +9,13 @@ export interface CassaProduct {
   isCombo: boolean
   image?: string
   components: {productId: string; quantity: number}[]
+  // Eventi in cui si vende, con l'eventuale prezzo (centesimi) valido solo in quell'evento
+  events: {eventId: string; priceCents?: number}[]
+}
+
+export interface CassaEvent {
+  id: string
+  label: string
 }
 
 interface Suggestion {
@@ -22,9 +29,18 @@ interface Suggestion {
 type Cart = Record<string, number>
 type View = 'none' | 'suggerimento' | 'riepilogo'
 
-const STORAGE_KEY = 'cassa-conto-v1'
+const CARTS_KEY = 'cassa-conti-v2'
+const EVENT_KEY = 'cassa-evento-v2'
+const BANKNOTES = [500, 1000, 2000, 5000]
 
 const euro = (cents: number) => '€ ' + (cents / 100).toFixed(2).replace('.', ',')
+
+// "16,5" o "16.50" -> 1650 centesimi; vuoto o non valido -> null
+function parseCents(text: string): number | null {
+  const clean = text.trim().replace(',', '.')
+  if (!/^\d+(\.\d{0,2})?$/.test(clean)) return null
+  return Math.round(parseFloat(clean) * 100)
+}
 
 function joinNames(names: string[]) {
   if (names.length <= 1) return names.join('')
@@ -85,10 +101,59 @@ function Icon({name, size = 18}: {name: 'sparkles' | 'arrow-right' | 'x' | 'circ
   )
 }
 
-export default function Cassa({products}: {products: CassaProduct[]}) {
+function readStorage<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // senza storage il conto non sopravvive al ricaricamento, ma la cassa funziona
+  }
+}
+
+export default function Cassa({
+  products: allProducts,
+  events,
+  initialEventId,
+}: {
+  products: CassaProduct[]
+  events: CassaEvent[]
+  initialEventId?: string
+}) {
+  const [eventId, setEventId] = useState<string | undefined>(initialEventId ?? events[0]?.id)
+  const [carts, setCarts] = useState<Record<string, Cart>>({})
+  const [view, setView] = useState<View>('none')
+  const [pop, setPop] = useState<string | null>(null)
+  const [custom, setCustom] = useState('')
+  const [received, setReceived] = useState('')
+  const [dismissed, setDismissed] = useState<Record<string, boolean>>({})
+  const [loaded, setLoaded] = useState(false)
+  const dockRef = useRef<HTMLDivElement>(null)
+  const popRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [popPos, setPopPos] = useState<{top: number; left: number; arrow: number; above: boolean} | null>(null)
+
+  // Prodotti dell'evento scelto, con il prezzo valido per quell'evento
+  const products = useMemo(
+    () =>
+      allProducts
+        .map((p) => {
+          const entry = p.events.find((e) => e.eventId === eventId)
+          return entry ? {...p, priceCents: entry.priceCents ?? p.priceCents} : null
+        })
+        .filter((p): p is CassaProduct => p !== null),
+    [allProducts, eventId],
+  )
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
 
-  // Una combo vale solo se tutti i suoi componenti esistono in cassa come prodotti singoli
+  // Una combo vale solo se tutti i suoi componenti sono in vendita in questo evento come prodotti singoli
   const combos = useMemo(
     () =>
       products.filter(
@@ -105,40 +170,29 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   const singles = useMemo(() => products.filter((p) => !p.isCombo), [products])
   const shownCombos = useMemo(() => products.filter((p) => p.isCombo), [products])
 
-  const [cart, setCart] = useState<Cart>({})
-  const [view, setView] = useState<View>('none')
-  const [pop, setPop] = useState<string | null>(null)
-  const [custom, setCustom] = useState('')
-  const [dismissed, setDismissed] = useState<Record<string, boolean>>({})
-  const [loaded, setLoaded] = useState(false)
-  const scrollerRef = useRef<HTMLDivElement>(null)
-  const popRef = useRef<HTMLDivElement>(null)
-  const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
-  const [popPos, setPopPos] = useState<{top: number; left: number; arrow: number; above: boolean} | null>(null)
+  const cart: Cart = useMemo(() => {
+    const raw = (eventId && carts[eventId]) || {}
+    const clean: Cart = {}
+    for (const [id, qty] of Object.entries(raw)) if (byId.has(id) && qty > 0) clean[id] = qty
+    return clean
+  }, [carts, eventId, byId])
 
-  // Il conto sopravvive a un ricaricamento accidentale della pagina
+  // Evento e conti sopravvivono a un ricaricamento accidentale della pagina
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') as Cart
-      const clean: Cart = {}
-      for (const [id, qty] of Object.entries(saved)) {
-        if (byId.has(id) && Number.isInteger(qty) && qty > 0) clean[id] = qty
-      }
-      setCart(clean)
-    } catch {
-      // niente storage: si parte da un conto vuoto
-    }
+    const saved = readStorage<Record<string, Cart>>(CARTS_KEY, {})
+    setCarts(saved && typeof saved === 'object' ? saved : {})
+    const savedEvent = readStorage<string | null>(EVENT_KEY, null)
+    if (savedEvent && events.some((e) => e.id === savedEvent)) setEventId(savedEvent)
     setLoaded(true)
-  }, [byId])
+  }, [events])
 
   useEffect(() => {
-    if (!loaded) return
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
-    } catch {
-      // ignorato
-    }
-  }, [cart, loaded])
+    if (loaded) writeStorage(CARTS_KEY, carts)
+  }, [carts, loaded])
+
+  useEffect(() => {
+    if (loaded && eventId) writeStorage(EVENT_KEY, eventId)
+  }, [eventId, loaded])
 
   function suggestionsFor(c: Cart, skip: Record<string, boolean>): Suggestion[] {
     const out: Suggestion[] = []
@@ -157,31 +211,35 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
   const suggestions = suggestionsFor(cart, dismissed)
   const first = suggestions[0]
-  const ids = Object.keys(cart).filter((id) => byId.has(id))
+  const ids = Object.keys(cart)
   const count = ids.reduce((n, id) => n + cart[id], 0)
   const total = ids.reduce((t, id) => t + cart[id] * byId.get(id)!.priceCents, 0)
   const customN = parseInt(custom, 10)
 
+  const receivedCents = parseCents(received)
+  const change = receivedCents === null ? null : receivedCents - total
+
   // Posiziona il popover sotto la card; se sotto non c'è spazio lo apre sopra, e comunque lo tiene
-  // dentro l'area visibile della lista (tra intestazione e barra del totale)
+  // dentro la parte di schermo visibile (tra la navbar e la barra del totale)
   const placePop = useCallback(() => {
     const card = pop ? cardRefs.current[pop] : null
     const box = popRef.current
-    const area = scrollerRef.current
-    if (!card || !box || !area) return setPopPos(null)
+    if (!card || !box) return setPopPos(null)
     const GAP = 10
     const EDGE = 8
+    const header = document.querySelector('.site-header')
+    const areaTop = header ? header.getBoundingClientRect().bottom : 0
+    const areaBottom = dockRef.current ? dockRef.current.getBoundingClientRect().top : window.innerHeight
     const c = card.getBoundingClientRect()
-    const a = area.getBoundingClientRect()
     const w = box.offsetWidth
     const h = box.offsetHeight
-    const spaceBelow = a.bottom - c.bottom - EDGE
-    const spaceAbove = c.top - a.top - EDGE
+    const spaceBelow = areaBottom - c.bottom - EDGE
+    const spaceAbove = c.top - areaTop - EDGE
     const above = spaceBelow < h + GAP && spaceAbove > spaceBelow
     let top = above ? c.top - GAP - h : c.bottom + GAP
-    top = Math.min(Math.max(top, a.top + EDGE), a.bottom - h - EDGE)
+    top = Math.min(Math.max(top, areaTop + EDGE), areaBottom - h - EDGE)
     const center = c.left + c.width / 2
-    const left = Math.min(Math.max(center - w / 2, a.left + EDGE), a.right - w - EDGE)
+    const left = Math.min(Math.max(center - w / 2, EDGE), window.innerWidth - w - EDGE)
     const arrow = Math.min(Math.max(center - left - 7, 18), w - 32)
     setPopPos({top, left, arrow, above})
   }, [pop])
@@ -192,14 +250,18 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
   useEffect(() => {
     if (!pop) return
-    const area = scrollerRef.current
     window.addEventListener('resize', placePop)
-    area?.addEventListener('scroll', placePop)
+    window.addEventListener('scroll', placePop, {passive: true})
     return () => {
       window.removeEventListener('resize', placePop)
-      area?.removeEventListener('scroll', placePop)
+      window.removeEventListener('scroll', placePop)
     }
   }, [pop, placePop])
+
+  function setCart(update: (prev: Cart) => Cart) {
+    if (!eventId) return
+    setCarts((prev) => ({...prev, [eventId]: update(prev[eventId] || {})}))
+  }
 
   function setQty(id: string, n: number) {
     setCart((prev) => {
@@ -213,6 +275,15 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
     setDismissed({})
   }
 
+  function chooseEvent(id: string) {
+    setEventId(id)
+    setPop(null)
+    setCustom('')
+    setReceived('')
+    setView('none')
+    setDismissed({})
+  }
+
   function openPop(id: string) {
     setPop(id)
     setCustom('')
@@ -221,6 +292,11 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   function closePop() {
     setPop(null)
     setCustom('')
+  }
+
+  function closeSheet() {
+    setView('none')
+    setReceived('')
   }
 
   function openSummary() {
@@ -238,7 +314,7 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
       else delete next[part.productId]
     }
     next[first.combo.id] = (next[first.combo.id] || 0) + first.k
-    setCart(next)
+    setCart(() => next)
     setView(suggestionsFor(next, dismissed).length ? 'suggerimento' : 'riepilogo')
   }
 
@@ -250,10 +326,11 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   }
 
   function newOrder() {
-    setCart({})
+    setCart(() => ({}))
     setView('none')
     setPop(null)
     setCustom('')
+    setReceived('')
     setDismissed({})
   }
 
@@ -262,15 +339,15 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
   const lines = ids.map((id) => byId.get(id)!)
 
   const sections = [
-    {title: 'Combo', eyebrow: 'Menu fissi', items: shownCombos},
-    {title: 'Prodotti', eyebrow: 'Singoli', items: singles},
+    {title: 'Combo', items: shownCombos},
+    {title: 'Prodotti', items: singles},
   ].filter((s) => s.items.length > 0)
 
   function renderItem(item: CassaProduct) {
     const qty = cart[item.id] || 0
     const open = pop === item.id
     return (
-      <div key={item.id} className="cs-item" style={{zIndex: open ? 30 : 1}}>
+      <div key={item.id} className="cs-item" style={{zIndex: open ? 95 : 1}}>
         <button
           type="button"
           ref={(el) => {
@@ -361,59 +438,65 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
   return (
     <div className="cs-app">
-      <header className="cs-header">
-        <img src="/logo-icon.svg" alt="" width="34" height="34" />
-        <div className="cs-header__text">
-          <span className="cs-header__title">Cassa</span>
-          <span className="cs-header__sub">Festa della parrocchia</span>
-        </div>
-      </header>
-
-      {pop && <button type="button" className="cs-scrim" aria-label="Chiudi la scelta della quantità" onClick={closePop} />}
-
-      <div className="cs-scroll" ref={scrollerRef}>
-        <div className="cs-list">
-          {sections.length === 0 && <p className="cs-empty">Nessun prodotto in cassa. Aggiungili da Sanity, nella sezione “Prodotto (cassa)”.</p>}
-
-          {sections.map((section) => (
-            <section key={section.title} className="cs-section">
-              <div className="cs-heading">
-                <span className="cs-eyebrow">{section.eyebrow}</span>
-                <h2>{section.title}</h2>
-              </div>
-              <div className="cs-grid">{section.items.map(renderItem)}</div>
-            </section>
-          ))}
+      <div className="cs-event">
+        <label htmlFor="cs-event-select">Evento</label>
+        <div className="cs-select">
+          <select id="cs-event-select" value={eventId ?? ''} onChange={(e) => chooseEvent(e.target.value)} disabled={events.length === 0}>
+            {events.length === 0 && <option value="">Nessun evento con prodotti</option>}
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {view === 'none' && !pop && first && (
-        <button type="button" className="cs-hint" onClick={openSummary}>
-          <span className="cs-hint__inner">
-            <Icon name="sparkles" />
-            <span>
-              Con {first.combo.name} risparmi {euro(first.saving)}. Tocca per vedere
-            </span>
-            <Icon name="arrow-right" size={16} />
-          </span>
-        </button>
-      )}
+      {pop && <button type="button" className="cs-scrim" aria-label="Chiudi la scelta della quantità" onClick={closePop} />}
 
-      <div className="cs-bar">
-       <div className="cs-bar__inner">
-        <div className="cs-bar__sum">
-          <span className="cs-bar__count">{count === 0 ? 'Nessun articolo' : count === 1 ? '1 articolo' : `${count} articoli`}</span>
-          <span className="cs-bar__total">{euro(total)}</span>
+      <div className="cs-list">
+        {events.length === 0 && (
+          <p className="cs-empty">Nessun prodotto in cassa. In Sanity, apri un prodotto e aggiungilo a un evento nel campo “Eventi in cui si vende”.</p>
+        )}
+        {events.length > 0 && sections.length === 0 && <p className="cs-empty">Questo evento non ha ancora prodotti.</p>}
+
+        {sections.map((section) => (
+          <section key={section.title} className="cs-section">
+            <h2>{section.title}</h2>
+            <div className="cs-grid">{section.items.map(renderItem)}</div>
+          </section>
+        ))}
+      </div>
+
+      <div className="cs-dock" ref={dockRef}>
+        {view === 'none' && !pop && first && (
+          <button type="button" className="cs-hint" onClick={openSummary}>
+            <span className="cs-hint__inner">
+              <Icon name="sparkles" />
+              <span>
+                Con {first.combo.name} risparmi {euro(first.saving)}. Tocca per vedere
+              </span>
+              <Icon name="arrow-right" size={16} />
+            </span>
+          </button>
+        )}
+
+        <div className="cs-bar">
+          <div className="cs-bar__inner">
+            <div className="cs-bar__sum">
+              <span className="cs-bar__count">{count === 0 ? 'Nessun articolo' : count === 1 ? '1 articolo' : `${count} articoli`}</span>
+              <span className="cs-bar__total">{euro(total)}</span>
+            </div>
+            <button type="button" className="cs-btn cs-btn--primary cs-btn--lg" disabled={count === 0} onClick={openSummary}>
+              Riepilogo <Icon name="arrow-right" size={18} />
+            </button>
+          </div>
         </div>
-        <button type="button" className="cs-btn cs-btn--primary cs-btn--lg" disabled={count === 0} onClick={openSummary}>
-          Riepilogo <Icon name="arrow-right" size={18} />
-        </button>
-       </div>
       </div>
 
       {showSuggestion && first && (
         <div className="cs-sheet-wrap">
-          <button type="button" className="cs-sheet-close" aria-label="Chiudi" onClick={() => setView('none')} />
+          <button type="button" className="cs-sheet-close" aria-label="Chiudi" onClick={closeSheet} />
           <div role="dialog" aria-label="Suggerimento combo" className="cs-sheet cs-sheet--sugg">
             <div className="cs-sugg__head">
               <span className="cs-badge">
@@ -454,11 +537,11 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
 
       {showSummary && (
         <div className="cs-sheet-wrap">
-          <button type="button" className="cs-sheet-close" aria-label="Torna ai prodotti" onClick={() => setView('none')} />
+          <button type="button" className="cs-sheet-close" aria-label="Torna ai prodotti" onClick={closeSheet} />
           <div role="dialog" aria-label="Riepilogo del conto" className="cs-sheet cs-sheet--summary">
             <div className="cs-summary__head">
               <h2>Riepilogo</h2>
-              <button type="button" className="cs-iconbtn" aria-label="Torna ai prodotti" onClick={() => setView('none')}>
+              <button type="button" className="cs-iconbtn" aria-label="Torna ai prodotti" onClick={closeSheet}>
                 <Icon name="x" size={20} />
               </button>
             </div>
@@ -482,10 +565,43 @@ export default function Cassa({products}: {products: CassaProduct[]}) {
                 <span>Totale</span>
                 <strong>{euro(total)}</strong>
               </div>
+
+              <div className="cs-pay">
+                <label htmlFor="cs-received">Ricevuto</label>
+                <div className="cs-pay__field">
+                  <span aria-hidden="true">€</span>
+                  <input
+                    id="cs-received"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="0,00"
+                    value={received}
+                    onChange={(e) => setReceived(e.target.value.replace(/[^\d.,]/g, '').slice(0, 8))}
+                  />
+                </div>
+                <div className="cs-pay__quick">
+                  <button type="button" className="cs-chip" onClick={() => setReceived((total / 100).toFixed(2).replace('.', ','))}>
+                    Esatto
+                  </button>
+                  {BANKNOTES.filter((n) => n >= total).map((n) => (
+                    <button key={n} type="button" className="cs-chip" onClick={() => setReceived(String(n / 100))}>
+                      € {n / 100}
+                    </button>
+                  ))}
+                </div>
+                {change !== null && (
+                  <div className={'cs-pay__result' + (change < 0 ? ' is-short' : '')} aria-live="polite">
+                    <span>{change < 0 ? 'Mancano' : 'Resto da dare'}</span>
+                    <strong>{euro(Math.abs(change))}</strong>
+                  </div>
+                )}
+              </div>
+
               <button type="button" className="cs-btn cs-btn--primary cs-btn--lg cs-btn--full" onClick={newOrder}>
                 <Icon name="circle-check" /> Incassato, nuovo ordine
               </button>
-              <button type="button" className="cs-btn cs-btn--outline cs-btn--lg cs-btn--full" onClick={() => setView('none')}>
+              <button type="button" className="cs-btn cs-btn--outline cs-btn--lg cs-btn--full" onClick={closeSheet}>
                 Modifica ordine
               </button>
             </div>

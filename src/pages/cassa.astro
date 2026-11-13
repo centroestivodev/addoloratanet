@@ -1,16 +1,22 @@
 ---
-import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/Container.astro";
+import SectionHeading from "../components/ui/SectionHeading.astro";
 import Cassa, { type CassaProduct } from "../components/cassa/Cassa";
 import { sanityClient } from "../sanity/lib/client";
 import { urlFor } from "../sanity/lib/image";
-import { CASSA_PRODUCTS, type CassaProductDoc } from "../sanity/lib/queries";
+import { formatDay, todayInRome } from "../sanity/lib/eventDate";
+import { CASSA_EVENTS, CASSA_PRODUCTS, type CassaEventDoc, type CassaProductDoc } from "../sanity/lib/queries";
 
 // Pagina di servizio per le feste: dati letti a ogni richiesta, mai indicizzata
 export const prerender = false;
 
 Astro.response.headers.set("Cache-Control", "no-store");
 
-const docs = await sanityClient.fetch<CassaProductDoc[]>(CASSA_PRODUCTS);
+const [docs, eventDocs] = await Promise.all([
+	sanityClient.fetch<CassaProductDoc[]>(CASSA_PRODUCTS),
+	sanityClient.fetch<CassaEventDoc[]>(CASSA_EVENTS),
+]);
 
 const products: CassaProduct[] = docs.map((p) => ({
 	id: p.id,
@@ -18,22 +24,23 @@ const products: CassaProduct[] = docs.map((p) => ({
 	description: p.description,
 	priceCents: p.priceCents,
 	isCombo: p.isCombo,
-	image: p.image?.asset ? urlFor(p.image).width(400).height(192).auto("format").url() : undefined,
+	image: p.image?.asset ? urlFor(p.image).width(400).height(240).auto("format").url() : undefined,
 	components: p.components ?? [],
+	events: p.events ?? [],
 }));
+
+const events = eventDocs.map((e) => ({ id: e.id, label: `${e.title} · ${formatDay(e.eventDate)}` }));
+
+// Evento preselezionato: quello in corso oggi, altrimenti il prossimo, altrimenti l'ultimo passato
+const today = todayInRome();
+const inProgress = eventDocs.find((e) => e.eventDate <= today && (e.endDate ?? e.eventDate) >= today);
+const upcoming = eventDocs.filter((e) => e.eventDate > today).sort((a, b) => a.eventDate.localeCompare(b.eventDate))[0];
+const initialEventId = (inProgress ?? upcoming ?? eventDocs[0])?.id;
 ---
 
-<!doctype html>
-<html lang="it">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="robots" content="noindex, nofollow" />
-		<meta name="theme-color" content="#0a2443" />
-		<link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
-		<title>Cassa | Parrocchia S. M. Addolorata</title>
-	</head>
-	<body>
-		<Cassa client:load products={products} />
-	</body>
-</html>
+<Layout title="Cassa" description="Cassa per le feste della parrocchia." noindex>
+	<Container class="page-top">
+		<SectionHeading as="h1" size="lg" title="Cassa" description="Scegli l'evento e batti il conto." />
+		<Cassa client:load products={products} events={events} initialEventId={initialEventId} />
+	</Container>
+</Layout>
