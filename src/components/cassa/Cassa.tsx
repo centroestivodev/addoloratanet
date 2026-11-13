@@ -204,9 +204,12 @@ export default function Cassa({
         k = Math.min(k, Math.floor((c[part.productId] || 0) / part.quantity))
         regular += byId.get(part.productId)!.priceCents * part.quantity
       }
-      if (k >= 1) out.push({combo, k, regular: regular * k, price: combo.priceCents * k, saving: (regular - combo.priceCents) * k})
+      const saving = (regular - combo.priceCents) * k
+      // Una combo che non fa risparmiare non è un suggerimento
+      if (k >= 1 && saving > 0) out.push({combo, k, regular: regular * k, price: combo.priceCents * k, saving})
     }
-    return out
+    // Si parte dalla combo che fa risparmiare di più; a parità resta l'ordine del listino
+    return out.sort((a, b) => b.saving - a.saving)
   }
 
   const suggestions = suggestionsFor(cart, dismissed)
@@ -555,6 +558,14 @@ export default function Cassa({
                       {line.isCombo && <span className="cs-badge cs-badge--accent">Combo</span>}
                       {euro(line.priceCents)} cad.
                     </span>
+                    {line.isCombo && line.components.length > 0 && (
+                      <span className="cs-line__contents">
+                        {line.components
+                          .map((c) => `${c.quantity > 1 ? `${c.quantity}× ` : ''}${byId.get(c.productId)?.name ?? ''}`)
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    )}
                   </span>
                   <span className="cs-line__total">{euro(line.priceCents * cart[line.id])}</span>
                 </div>

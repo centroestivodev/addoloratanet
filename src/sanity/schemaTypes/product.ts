@@ -118,11 +118,41 @@ export default defineType({
           },
         }),
       ],
-      validation: (Rule) =>
+      validation: (Rule) => [
         Rule.custom((items) => {
           const ids = ((items as {event?: {_ref?: string}}[] | undefined) ?? []).map((i) => i.event?._ref).filter(Boolean)
           return new Set(ids).size === ids.length ? true : 'Lo stesso listino compare due volte.'
         }),
+        // Una combo in un listino senza tutti i suoi prodotti si può vendere a mano, ma la cassa non la suggerisce mai
+        Rule.custom(async (items, context) => {
+          const doc = context.document as {isCombo?: boolean; comboItems?: {product?: {_ref?: string}}[]} | undefined
+          if (!doc?.isCombo) return true
+          const productIds = (doc.comboItems ?? []).map((c) => c.product?._ref).filter((id): id is string => !!id)
+          const listingIds = ((items as {event?: {_ref?: string}}[] | undefined) ?? [])
+            .map((i) => i.event?._ref)
+            .filter((id): id is string => !!id)
+          if (!productIds.length || !listingIds.length) return true
+
+          const client = context.getClient({apiVersion: '2025-02-19'})
+          const [products, listings] = await Promise.all([
+            client.fetch<{_id: string; name: string; listings?: string[]}[]>(
+              `*[_id in $ids]{_id, name, "listings": events[].event._ref}`,
+              {ids: productIds},
+            ),
+            client.fetch<{_id: string; title: string}[]>(`*[_id in $ids]{_id, title}`, {ids: listingIds}),
+          ])
+
+          const problems = listingIds.flatMap((listingId) => {
+            const missing = products.filter((p) => !(p.listings ?? []).includes(listingId)).map((p) => p.name)
+            if (!missing.length) return []
+            const title = listings.find((l) => l._id === listingId)?.title ?? 'listino'
+            return [`nel listino "${title}" mancano: ${missing.join(', ')}`]
+          })
+          return problems.length
+            ? `Questa combo non verrà suggerita in cassa perché ${problems.join('; ')}. Aggiungi quei prodotti al listino.`
+            : true
+        }).warning(),
+      ],
     }),
     defineField({
       name: 'order',
