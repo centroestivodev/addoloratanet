@@ -1,16 +1,16 @@
 import {defineField, defineType} from 'sanity'
 
-// Un evento per cui la cassa ha un listino (feste, sagre...). I prodotti si collegano a questi eventi
+// Un listino della cassa, di solito uno per festa o sagra. I prodotti si collegano a questi listini
 export default defineType({
   name: 'cassaEvent',
-  title: 'Evento (cassa)',
+  title: 'Listino (cassa)',
   type: 'document',
   fields: [
     defineField({
       name: 'title',
       title: 'Nome',
       type: 'string',
-      description: 'Il nome che compare nel selettore in cima alla cassa.',
+      description: 'Il nome che compare nel selettore in cima alla cassa, per esempio "Festa della parrocchia".',
       validation: (Rule) => Rule.required(),
     }),
     defineField({

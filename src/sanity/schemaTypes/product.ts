@@ -24,7 +24,7 @@ export default defineType({
       title: 'Prezzo (€)',
       type: 'number',
       description:
-        'Prezzo di una porzione, in euro, usato in tutti gli eventi che non ne indicano uno proprio. Per una combo è il prezzo della combo intera.',
+        'Prezzo di una porzione, in euro, usato in tutti i listini che non ne indicano uno proprio. Per una combo è il prezzo della combo intera.',
       validation: (Rule) => Rule.required().min(0).precision(2),
     }),
     defineField({
@@ -85,10 +85,10 @@ export default defineType({
     }),
     defineField({
       name: 'events',
-      title: 'Eventi in cui si vende',
+      title: 'Listini in cui si vende',
       type: 'array',
       description:
-        'La cassa mostra il prodotto solo negli eventi elencati qui. Se in un evento il prezzo è diverso, scrivilo nel campo "Prezzo per questo evento"; se lo lasci vuoto vale il prezzo del prodotto.',
+        'La cassa mostra il prodotto solo nei listini elencati qui. Se in un listino il prezzo è diverso, scrivilo nel campo "Prezzo in questo listino"; se lo lasci vuoto vale il prezzo del prodotto.',
       of: [
         defineArrayMember({
           type: 'object',
@@ -96,14 +96,14 @@ export default defineType({
           fields: [
             defineField({
               name: 'event',
-              title: 'Evento',
+              title: 'Listino',
               type: 'reference',
               to: [{type: 'cassaEvent'}],
               validation: (Rule) => Rule.required(),
             }),
             defineField({
               name: 'price',
-              title: 'Prezzo per questo evento (€)',
+              title: 'Prezzo in questo listino (€)',
               type: 'number',
               description: 'Facoltativo. Vuoto = stesso prezzo del prodotto.',
               validation: (Rule) => Rule.min(0).precision(2),
@@ -113,7 +113,7 @@ export default defineType({
             select: {event: 'event.title', price: 'price'},
             prepare({event, price}) {
               const euro = typeof price === 'number' ? `€ ${price.toFixed(2).replace('.', ',')}` : 'prezzo standard'
-              return {title: event || 'Evento', subtitle: euro}
+              return {title: event || 'Listino', subtitle: euro}
             },
           },
         }),
@@ -121,7 +121,7 @@ export default defineType({
       validation: (Rule) =>
         Rule.custom((items) => {
           const ids = ((items as {event?: {_ref?: string}}[] | undefined) ?? []).map((i) => i.event?._ref).filter(Boolean)
-          return new Set(ids).size === ids.length ? true : 'Lo stesso evento compare due volte.'
+          return new Set(ids).size === ids.length ? true : 'Lo stesso listino compare due volte.'
         }),
     }),
     defineField({

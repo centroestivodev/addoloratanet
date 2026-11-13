@@ -9,7 +9,7 @@ export interface CassaProduct {
   isCombo: boolean
   image?: string
   components: {productId: string; quantity: number}[]
-  // Eventi in cui si vende, con l'eventuale prezzo (centesimi) valido solo in quell'evento
+  // Listini in cui si vende, con l'eventuale prezzo (centesimi) valido solo in quel listino
   events: {eventId: string; priceCents?: number}[]
 }
 
@@ -439,10 +439,10 @@ export default function Cassa({
   return (
     <div className="cs-app">
       <div className="cs-event">
-        <label htmlFor="cs-event-select">Evento</label>
+        <label htmlFor="cs-event-select">Listino</label>
         <div className="cs-select">
           <select id="cs-event-select" value={eventId ?? ''} onChange={(e) => chooseEvent(e.target.value)} disabled={events.length === 0}>
-            {events.length === 0 && <option value="">Nessun evento con prodotti</option>}
+            {events.length === 0 && <option value="">Nessun listino con prodotti</option>}
             {events.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.label}
@@ -456,9 +456,9 @@ export default function Cassa({
 
       <div className="cs-list">
         {events.length === 0 && (
-          <p className="cs-empty">Nessun prodotto in cassa. In Sanity, apri un prodotto e aggiungilo a un evento nel campo “Eventi in cui si vende”.</p>
+          <p className="cs-empty">Nessun prodotto in cassa. In Sanity, apri un prodotto e aggiungilo a un listino nel campo “Listini in cui si vende”.</p>
         )}
-        {events.length > 0 && sections.length === 0 && <p className="cs-empty">Questo evento non ha ancora prodotti.</p>}
+        {events.length > 0 && sections.length === 0 && <p className="cs-empty">Questo listino non ha ancora prodotti.</p>}
 
         {sections.map((section) => (
           <section key={section.title} className="cs-section">
