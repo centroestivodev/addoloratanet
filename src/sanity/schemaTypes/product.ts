@@ -98,7 +98,7 @@ export default defineType({
               name: 'event',
               title: 'Evento',
               type: 'reference',
-              to: [{type: 'event'}],
+              to: [{type: 'cassaEvent'}],
               validation: (Rule) => Rule.required(),
             }),
             defineField({
@@ -110,10 +110,10 @@ export default defineType({
             }),
           ],
           preview: {
-            select: {title: 'event.title', date: 'event.eventDate', price: 'price'},
-            prepare({title, date, price}) {
+            select: {event: 'event.title', price: 'price'},
+            prepare({event, price}) {
               const euro = typeof price === 'number' ? `€ ${price.toFixed(2).replace('.', ',')}` : 'prezzo standard'
-              return {title: title || 'Evento', subtitle: [date, euro].filter(Boolean).join(' · ')}
+              return {title: event || 'Evento', subtitle: euro}
             },
           },
         }),

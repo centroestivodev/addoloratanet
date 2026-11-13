@@ -5,7 +5,6 @@ import SectionHeading from "../components/ui/SectionHeading.astro";
 import Cassa, { type CassaProduct } from "../components/cassa/Cassa";
 import { sanityClient } from "../sanity/lib/client";
 import { urlFor } from "../sanity/lib/image";
-import { formatDay, todayInRome } from "../sanity/lib/eventDate";
 import { CASSA_EVENTS, CASSA_PRODUCTS, type CassaEventDoc, type CassaProductDoc } from "../sanity/lib/queries";
 
 // Pagina di servizio per le feste: dati letti a ogni richiesta, mai indicizzata
@@ -29,13 +28,8 @@ const products: CassaProduct[] = docs.map((p) => ({
 	events: p.events ?? [],
 }));
 
-const events = eventDocs.map((e) => ({ id: e.id, label: `${e.title} · ${formatDay(e.eventDate)}` }));
-
-// Evento preselezionato: quello in corso oggi, altrimenti il prossimo, altrimenti l'ultimo passato
-const today = todayInRome();
-const inProgress = eventDocs.find((e) => e.eventDate <= today && (e.endDate ?? e.eventDate) >= today);
-const upcoming = eventDocs.filter((e) => e.eventDate > today).sort((a, b) => a.eventDate.localeCompare(b.eventDate))[0];
-const initialEventId = (inProgress ?? upcoming ?? eventDocs[0])?.id;
+const events = eventDocs.map((e) => ({ id: e.id, label: e.title }));
+const initialEventId = events[0]?.id;
 ---
 
 <Layout title="Cassa" description="Cassa per le feste della parrocchia." noindex>

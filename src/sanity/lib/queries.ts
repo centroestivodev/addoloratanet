@@ -107,7 +107,7 @@ export interface CassaProductDoc {
   isCombo: boolean
   image?: any
   components: {productId: string; quantity: number}[]
-  // Eventi in cui il prodotto si vende, con l'eventuale prezzo (in centesimi) valido solo lì
+  // Eventi (documenti cassaEvent) in cui il prodotto si vende, con l'eventuale prezzo (in centesimi) valido solo lì
   events: {eventId: string; priceCents?: number}[]
 }
 
@@ -121,13 +121,11 @@ export const CASSA_PRODUCTS = `*[_type == "product" && hidden != true && defined
 export interface CassaEventDoc {
   id: string
   title: string
-  eventDate: string
-  endDate?: string
 }
 
 // Solo gli eventi che hanno almeno un prodotto in vendita
-export const CASSA_EVENTS = `*[_type == "event" && count(*[_type == "product" && hidden != true && defined(price) && references(^._id)]) > 0]
-  | order(eventDate desc){ "id": _id, title, eventDate, endDate }`
+export const CASSA_EVENTS = `*[_type == "cassaEvent" && count(*[_type == "product" && hidden != true && defined(price) && references(^._id)]) > 0]
+  | order(coalesce(order, 9999) asc, title asc){ "id": _id, title }`
 
 // Immagine di una card notizia: la foto, altrimenti la prima pagina del PDF allegato
 export const pdfPreviewUrl = (pdfId: string) => `/pdf-preview/${pdfId}.jpg`
